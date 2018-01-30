@@ -1,0 +1,10 @@
+.avatar-pane {
+  -fx-padding: 0.25em;
+}
+.entries-vbox {
+  -fx-spacing: 0.15em;
+}
+.chat-date-label {
+  -fx-text-fill: #aaa;
+  -fx-font: 0.8em sans-serif;
+}

@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.image.ImageView?>
+<?import javafx.scene.layout.BorderPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.StackPane?>
+<?import javafx.scene.layout.VBox?>
+
+<HBox fillHeight="false" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" spacing="30.0" xmlns="http://javafx.com/javafx/9.0.1" xmlns:fx="http://javafx.com/fxml/1">
+   <children>
+      <StackPane styleClass="avatar-pane">
+         <children>
+            <ImageView pickOnBounds="true" preserveRatio="true" styleClass="avatar-image-view" />
+         </children>
+      </StackPane>
+      <BorderPane>
+         <top>
+            <HBox alignment="BASELINE_LEFT" fillHeight="false" spacing="20.0" BorderPane.alignment="CENTER">
+               <children>
+                  <Label styleClass="user-label" text="User" />
+                  <Label styleClass="chat-date-label" text="date" />
+               </children>
+            </HBox>
+         </top>
+         <center>
+            <VBox styleClass="entries-vbox" BorderPane.alignment="CENTER">
+               <BorderPane.margin>
+                  <Insets left="20.0" />
+               </BorderPane.margin>
+            </VBox>
+         </center>
+      </BorderPane>
+   </children>
+</HBox>
