@@ -1,1 +1,6 @@
 **/*.scala.d
+target/
+project/project/
+project/target/
+private/
+.*
