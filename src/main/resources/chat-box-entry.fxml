@@ -2,22 +2,21 @@
 
 <?import javafx.geometry.Insets?>
 <?import javafx.scene.control.Label?>
-<?import javafx.scene.image.ImageView?>
 <?import javafx.scene.layout.BorderPane?>
 <?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.StackPane?>
 <?import javafx.scene.layout.VBox?>
 
-<HBox fillHeight="false" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" spacing="30.0" xmlns="http://javafx.com/javafx/9.0.1" xmlns:fx="http://javafx.com/fxml/1">
+<HBox fillHeight="false" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" styleClass="chatlist-entry" xmlns="http://javafx.com/javafx/9.0.1" xmlns:fx="http://javafx.com/fxml/1">
    <children>
       <StackPane styleClass="avatar-pane">
-         <children>
-            <ImageView pickOnBounds="true" preserveRatio="true" styleClass="avatar-image-view" />
-         </children>
+         <HBox.margin>
+            <Insets right="25.0" />
+         </HBox.margin>
       </StackPane>
       <BorderPane>
          <top>
-            <HBox alignment="BASELINE_LEFT" fillHeight="false" spacing="20.0" BorderPane.alignment="CENTER">
+            <HBox alignment="BASELINE_LEFT" fillHeight="false" spacing="20.0" style="-fx-padding: 0 0 0.5em 0;" BorderPane.alignment="CENTER">
                <children>
                   <Label styleClass="user-label" text="User" />
                   <Label styleClass="chat-date-label" text="date" />

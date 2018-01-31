@@ -1,8 +1,10 @@
 .avatar-pane {
-  -fx-padding: 0.25em;
+  -fx-pref-height: 4em;
+  -fx-pref-width: 4em;
+  -fx-shape: "M 100 100 a 50 50 0 1 0 0.00001 0";
 }
 .entries-vbox {
-  -fx-spacing: 0.15em;
+  -fx-spacing: 0.2em;
 }
 .chat-date-label {
   -fx-text-fill: #aaa;

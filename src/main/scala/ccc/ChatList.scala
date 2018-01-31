@@ -31,7 +31,7 @@ class ChatList extends ListView[ChatBox] {
   
   private class ChatBoxListCell extends ListCell[ChatBox] {
     val pane = FXMLLoader.load[Pane](getClass.getResource("/chat-box-entry.fxml"))
-    val avatarImageView = pane.lookup(".avatar-image-view").asInstanceOf[ImageView]
+    val avatarPane = pane.lookup(".avatar-pane").asInstanceOf[Pane]
     val userLabel = pane.lookup(".user-label").asInstanceOf[Label].modify(_.text = "")
     val dateLabel = pane.lookup(".chat-date-label").asInstanceOf[Label].modify(_.text = "")
     val entriesVBox = pane.lookup(".entries-vbox").asInstanceOf[VBox]
@@ -39,13 +39,14 @@ class ChatList extends ListView[ChatBox] {
     override protected def updateItem(item: ChatBox, empty: Boolean): Unit = {
       super.updateItem(item, empty)
       if (!empty) {
-        avatarImageView.setImage(item.avatar)
+        avatarPane.cssMetaData.forEach(cms => println(cms))
+        avatarPane.background = new Background(new BackgroundImage(item.avatar, BackgroundRepeat.NO_REPEAT, BackgroundRepeat.NO_REPEAT, BackgroundPosition.CENTER, BackgroundSize.DEFAULT))
         userLabel.text = item.user
         dateLabel.text = "a date goes here, seriously "
         entriesVBox.children.clear()
         item.messages.map(m => new TextFlow(new Text(m))) foreach entriesVBox.children.add
       } else {
-        avatarImageView.setImage(null)
+        avatarPane.background = null
         userLabel.text = null
         dateLabel.text = null
         entriesVBox.children.clear()
