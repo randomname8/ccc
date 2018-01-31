@@ -8,6 +8,10 @@ scalacOptions in (Compile, console) --= Seq("-Ywarn-unused:_", "-opt:_", "-Xlint
 
 libraryDependencies ++= Seq(
   "com.github.pathikrit" %% "better-files" % "3.4.0",
+  "com.atlassian.commonmark" % "commonmark" % "0.11.0",
+  "com.atlassian.commonmark" % "commonmark-ext-autolink" % "0.11.0",
+  "com.atlassian.commonmark" % "commonmark-ext-gfm-strikethrough" % "0.11.0",
+  "com.atlassian.commonmark" % "commonmark-ext-ins" % "0.11.0",
 )
 
 mainClass in reStart := Some("ccc.DevAppReloader")
