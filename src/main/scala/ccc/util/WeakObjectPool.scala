@@ -1,4 +1,4 @@
-package ccc
+package ccc.util
 
 /**
  * An object pool were objects are weakly referenced, so when getting an instance, a new one might have to be allocated if all the stored

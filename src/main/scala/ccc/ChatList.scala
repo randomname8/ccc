@@ -1,5 +1,6 @@
 package ccc
 
+import javafx.beans.binding.Bindings
 import javafx.collections.FXCollections
 import javafx.fxml.FXMLLoader
 import javafx.scene.control._
@@ -28,10 +29,21 @@ class ChatList extends ListView[ChatBox] {
     }
   }
   
-  /*
+  /**
    * cache some viewpanes, though only weakly, if they get claimed that's alright
    */
-  private[this] val webViewCache = new WeakObjectPool[WebView](() => new WebView().modify(_.minWidthProperty bind ChatList.this.widthProperty))
+  private[this] val webViewCache = new util.WeakObjectPool[WebView](() => {
+      val res = new WebView()
+      res.contextMenuEnabled = false
+      res.styleClass add "code-block"
+      res
+    })
+  
+  /**
+   * cache the most recent images shown in the chat
+   */
+  private[this] val imagesCache = new util.LruMap[String, util.WeakImage](100)
+  
   
   private class ChatBoxListCell extends ListCell[ChatBox] {
     val pane = FXMLLoader.load[Pane](getClass.getResource("/chat-box-entry.fxml"))
@@ -42,7 +54,16 @@ class ChatList extends ListView[ChatBox] {
     this.graphic = pane
     private[this] var lastItem: ChatBox = _
     private[this] var localWebView = Vector.empty[WebView] //track the webviews used by this item and hold a strong ref to it.
-    val renderMessage = MarkdownRenderer.render(_: String, ChatList.this.widthProperty, webViewCache)
+    val renderMessage = MarkdownRenderer.render(_: String,
+                                                Bindings.subtract(ChatList.this.widthProperty, avatarPane.widthProperty).map(_.doubleValue - 100),
+                                                webViewCache.get _,
+                                                uri => {
+        imagesCache.get(uri).getOrElse {
+          val res = new util.WeakImage(uri)
+          imagesCache(uri) = res
+          res
+        }.get
+      })
     override protected def updateItem(item: ChatBox, empty: Boolean): Unit = {
       super.updateItem(item, empty)
       if (item == lastItem) return;
@@ -51,15 +72,18 @@ class ChatList extends ListView[ChatBox] {
       localWebView foreach webViewCache.takeBack
       localWebView = Vector.empty
       
-      if (!empty) {
+      if (!empty && item.messages.nonEmpty) {
         avatarPane.background = new Background(new BackgroundImage(item.avatar, BackgroundRepeat.NO_REPEAT, BackgroundRepeat.NO_REPEAT, BackgroundPosition.CENTER, BackgroundSize.DEFAULT))
         userLabel.text = item.user
         dateLabel.text = "yyyy/mm/dd"
         entriesVBox.children.clear()
         
-        item.messages map renderMessage foreach { tf =>
-          entriesVBox.children.add(tf)
-          tf.children.iterator.asScala.collect { case v: WebView => v}.foreach(v => localWebView :+= v)
+        item.messages.map(renderMessage).flatten foreach { node =>
+          entriesVBox.children.add(node)
+          node match {
+            case v: WebView => localWebView :+= v
+            case _ =>
+          }
         }
       } else {
         avatarPane.background = null

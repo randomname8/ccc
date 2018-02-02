@@ -10,3 +10,6 @@
   -fx-text-fill: #aaa;
   -fx-font: 0.8em sans-serif;
 }
+.code-block > .scroll-bar:vertical {
+  visibility: hidden;
+}

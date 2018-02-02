@@ -10,7 +10,7 @@ trait BaseApplication extends Application {
   override def init() = {
     println("named parameters " + getParameters.getNamed)
     val fontSize = getParameters.getNamed.asScala.get("fontSize").map(_.toDouble)
-    if (util.Properties.isLinux || fontSize.isDefined) {
+    if (scala.util.Properties.isLinux || fontSize.isDefined) {
       println("primary screen dpi " + Screen.getPrimary().getDpi)
       val systemFontSize = Screen.getPrimary().getDpi match {
         case -1 => None

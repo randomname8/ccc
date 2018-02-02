@@ -14,6 +14,8 @@ object ChatAreaTest extends App {
 class ChatAreaTest extends BaseApplication {
   override def extraInitialize(stage: Stage): Unit = {
     stage.title = "CCC"
+    stage.width = 700
+    stage.height = 700
   }
   
   val chatList = new ChatList()
