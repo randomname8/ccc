@@ -77,7 +77,7 @@ object MarkdownRenderer {
         }
         override def visit(t: md.Text) = {
           val text = t.getLiteral
-          val usedEmojis = text.split("\\s+|[,;\\.]").flatMap(s => emojiProvider.get(s).map(s -> _))
+          val usedEmojis = text.split("""\s+|(?!;_;|;P|;p|;\))[,;\.]""").flatMap(s => emojiProvider.get(s).map(s -> _))
           var lastIdx = 0
           for ((toReplace, emoji) <- usedEmojis) {
             val idx = text.indexOf(toReplace, lastIdx) // because of our previous split and find, the index *has* to exists

@@ -22,7 +22,20 @@ object EmojiOne {
     val indexedByUnicode = descriptions.map(e => e.unicode -> e).toMap
     val indexedByAlphaCode = descriptions.map(e => e.alphaCode -> e).toMap
     val indexedByAlias = descriptions.flatMap(e => e.aliases.map(_ -> e)).toMap
-    val emojiLookup = indexedByUnicode ++ indexedByAlias ++ indexedByAlphaCode
+    val emojiLookup = indexedByUnicode ++ indexedByAlias ++ indexedByAlphaCode ++ Seq(
+      ":D" -> indexedByUnicode("😀"),
+      ":p" -> indexedByUnicode("😛"),
+      ":P" -> indexedByUnicode("😛"),
+      ":)" -> indexedByUnicode("🙂"),
+      ":o" -> indexedByUnicode("😮"),
+      ":O" -> indexedByUnicode("😮"),
+      "D:" -> indexedByUnicode("😩"),
+      ";)" -> indexedByUnicode("😉"),
+      ";p" -> indexedByUnicode("😜"),
+      ";P" -> indexedByUnicode("😜"),
+      ";_;" -> indexedByUnicode("😢"),
+      "T_T" -> indexedByUnicode("😭"),
+    )
     (descriptions, emojiLookup)
   }
   
