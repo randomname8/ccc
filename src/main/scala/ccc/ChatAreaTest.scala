@@ -3,7 +3,9 @@ package ccc
 import javafx.application.Application
 import javafx.scene.control.ScrollPane
 import javafx.scene.image.Image
+import javafx.scene.layout.BorderPane
 import javafx.scene.text.Font
+import javafx.scene.web.WebView
 import javafx.stage.Stage
 
 object ChatAreaTest extends App {
@@ -16,11 +18,29 @@ class ChatAreaTest extends BaseApplication {
     stage.title = "CCC"
     stage.width = 700
     stage.height = 700
+    stage.scene.stylesheets.add("/ccc-theme.css")
   }
   
   val emojis = util.EmojiOne.emojiLookup.map(e => e._1 -> new util.WeakImage(s"/emojione/128x128_png/${e._2.filename}.png"))
-  val chatList = new ChatList(emojis.mapValues(_.get))
-  val sceneRoot = new ScrollPane(chatList).modify(_.fitToWidth = true, _.fitToHeight = true)
+  private[this] val imagesCache: collection.mutable.Map[String, util.WeakImage] = new util.LruMap[String, util.WeakImage](100).withDefault { k => // cache the most recent images shown in the chat
+    val res = new util.WeakImage(k)
+    imagesCache(k) = res
+    res
+  }
+  /**
+   * cache some viewpanes, though only weakly, if they get claimed that's alright
+   */
+  private[this] val webViewCache = new util.WeakObjectPool[WebView](() => {
+      val res = new WebView()
+      res.contextMenuEnabled = false
+      res.styleClass add "code-block"
+      res
+    })
+  val chatList = new ChatList(webViewCache, imagesCache, emojis.mapValues(_.get))
+  val sceneRoot = new BorderPane {
+    this center new ScrollPane(chatList).modify(_.fitToWidth = true, _.fitToHeight = true)
+    this bottom new ChatTextInput(webViewCache, imagesCache, emojis.mapValues(_.get))
+  }
   
   val imgSize = Font.getDefault.getSize * 4
   val panda = new Image("https://cdn.discordapp.com/avatars/84766711735136256/28063abbe16697aa29d99d004ebd177f.png?size=256", imgSize, imgSize, true, true)

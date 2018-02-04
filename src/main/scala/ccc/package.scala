@@ -42,14 +42,14 @@ package object ccc {
    * Useful layouts
    **********************************/
   
-  def hbox(nodes: Node*)(implicit spacing: Int = 10, alignment: Pos = Pos.BASELINE_LEFT, fillHeight: Boolean = false) = {
+  def hbox(nodes: Node*)(implicit spacing: Double = 10, alignment: Pos = Pos.BASELINE_LEFT, fillHeight: Boolean = false) = {
     val res = new HBox(nodes:_*)
     res.setSpacing(spacing)
     res.setAlignment(alignment)
     res.setFillHeight(fillHeight)
     res
   }
-  def vbox(nodes: Node*)(implicit spacing: Int = 10, alignment: Pos = Pos.BASELINE_LEFT, fillWidth: Boolean = false) = {
+  def vbox(nodes: Node*)(implicit spacing: Double = 10, alignment: Pos = Pos.BASELINE_LEFT, fillWidth: Boolean = false) = {
     val res = new VBox(nodes:_*)
     res.setSpacing(spacing)
     res.setAlignment(alignment)
@@ -57,7 +57,7 @@ package object ccc {
     res
   }
   
-  def gridPane(rows: Seq[Node]*)(implicit vgap: Int = 10, hgap: Int = 10) = new GridPane {
+  def gridPane(rows: Seq[Node]*)(implicit vgap: Double = 10, hgap: Double = 10) = new GridPane {
     setVgap(vgap)
     setHgap(hgap)
     for ((row, idx) <- rows.zipWithIndex)
@@ -76,6 +76,8 @@ package object ccc {
    *********************/
   
   implicit class ObservableValueExt[T](val property: ObservableValue[T]) extends AnyVal {
+    import language.existentials
+    def foreach(f: T => Unit): Unit = property.addListener((_: t forSome {type t >: T}, _, v) => f(v))
     def map[U](f: T => U): Binding[U] = new ObjectBinding[U] {
       bind(property)
       override def computeValue = f(property.getValue)

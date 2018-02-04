@@ -13,10 +13,11 @@ object ChatList {
   case class ChatBox(user: String, avatar: Image, messages: Vector[String])
 }
 import ChatList._
-class ChatList(emojiProvider: Map[String, Image]) extends ListView[ChatBox] {
+class ChatList(val webViewCache: util.WeakObjectPool[WebView],
+               val imagesCache: collection.Map[String, util.WeakImage],
+               val emojiProvider: Map[String, Image]) extends ListView[ChatBox] {
   this.styleClass.add("chat-list")
   this.items = FXCollections.observableList(new java.util.LinkedList())
-  this.stylesheets.add("/ccc-theme.css")
   private[this] val itemsScala = this.items.asScala
   
   this.cellFactory = _ => new ChatBoxListCell()
@@ -30,22 +31,6 @@ class ChatList(emojiProvider: Map[String, Image]) extends ListView[ChatBox] {
     }
   }
   
-  /**
-   * cache some viewpanes, though only weakly, if they get claimed that's alright
-   */
-  private[this] val webViewCache = new util.WeakObjectPool[WebView](() => {
-      val res = new WebView()
-      res.contextMenuEnabled = false
-      res.styleClass add "code-block"
-      res
-    })
-  
-  /**
-   * cache the most recent images shown in the chat
-   */
-  private[this] val imagesCache = new util.LruMap[String, util.WeakImage](100)
-  
-  
   private class ChatBoxListCell extends ListCell[ChatBox] {
     val pane = FXMLLoader.load[Pane](getClass.getResource("/chat-box-entry.fxml"))
     val avatarPane = pane.lookup(".avatar-pane").asInstanceOf[Pane]
@@ -58,13 +43,8 @@ class ChatList(emojiProvider: Map[String, Image]) extends ListView[ChatBox] {
     val renderMessage = MarkdownRenderer.render(_: String,
                                                 Bindings.subtract(ChatList.this.widthProperty, avatarPane.widthProperty).map(_.doubleValue - 100),
                                                 webViewCache.get _,
-                                                uri => {
-        imagesCache.get(uri).getOrElse {
-          val res = new util.WeakImage(uri)
-          imagesCache(uri) = res
-          res
-        }.get
-      }, emojiProvider)
+                                                imagesCache(_).get,
+                                                emojiProvider)
     override protected def updateItem(item: ChatBox, empty: Boolean): Unit = {
       super.updateItem(item, empty)
       if (item == lastItem) return;
