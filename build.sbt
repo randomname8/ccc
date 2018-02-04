@@ -12,6 +12,7 @@ libraryDependencies ++= Seq(
   "com.atlassian.commonmark" % "commonmark-ext-autolink" % "0.11.0",
   "com.atlassian.commonmark" % "commonmark-ext-gfm-strikethrough" % "0.11.0",
   "com.atlassian.commonmark" % "commonmark-ext-ins" % "0.11.0",
+  "com.univocity" % "univocity-parsers" % "2.5.9",
 )
 
 mainClass in reStart := Some("ccc.DevAppReloader")

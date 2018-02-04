@@ -13,7 +13,8 @@ object ChatList {
   case class ChatBox(user: String, avatar: Image, messages: Vector[String])
 }
 import ChatList._
-class ChatList extends ListView[ChatBox] {
+class ChatList(emojiProvider: Map[String, Image]) extends ListView[ChatBox] {
+  this.styleClass.add("chat-list")
   this.items = FXCollections.observableList(new java.util.LinkedList())
   this.stylesheets.add("/ccc-theme.css")
   private[this] val itemsScala = this.items.asScala
@@ -53,7 +54,7 @@ class ChatList extends ListView[ChatBox] {
     val entriesVBox = pane.lookup(".entries-vbox").asInstanceOf[VBox]
     this.graphic = pane
     private[this] var lastItem: ChatBox = _
-    private[this] var localWebView = Vector.empty[WebView] //track the webviews used by this item and hold a strong ref to it.
+    private[this] var localWebView = Vector.empty[WebView] //track the webviews used by this item in order to give them back to the pool later
     val renderMessage = MarkdownRenderer.render(_: String,
                                                 Bindings.subtract(ChatList.this.widthProperty, avatarPane.widthProperty).map(_.doubleValue - 100),
                                                 webViewCache.get _,
@@ -63,7 +64,7 @@ class ChatList extends ListView[ChatBox] {
           imagesCache(uri) = res
           res
         }.get
-      })
+      }, emojiProvider)
     override protected def updateItem(item: ChatBox, empty: Boolean): Unit = {
       super.updateItem(item, empty)
       if (item == lastItem) return;

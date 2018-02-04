@@ -18,7 +18,8 @@ class ChatAreaTest extends BaseApplication {
     stage.height = 700
   }
   
-  val chatList = new ChatList()
+  val emojis = util.EmojiOne.emojiLookup.map(e => e._1 -> new util.WeakImage(s"/emojione/128x128_png/${e._2.filename}.png"))
+  val chatList = new ChatList(emojis.mapValues(_.get))
   val sceneRoot = new ScrollPane(chatList).modify(_.fitToWidth = true, _.fitToHeight = true)
   
   val imgSize = Font.getDefault.getSize * 4
@@ -39,8 +40,9 @@ and some bash now
 for i in {0..7}; do sudo cpufreq-set -g performance -u 2GHz -c $i; done;
 ```
 """)
+  chatList.addEntry("(⊙.⊙)☂", totoro, "Some emojis now, vampire :vampire:,:chopsticks:,:grin:,:runner_tone1:,:runner_tone2:,:runner_tone3:,:runner_tone4:,😼")
   for (i <- 0 until 100) {
     val (image, user) = if (i % 2 == 0) (totoro, "(⊙.⊙)☂") else (panda, "Panda")
-    for (j <- 0 until (math.random * 5).toInt) chatList.addEntry(user, image, s"$i-$j")
+    for (j <- 0 until (math.random * 5).toInt) chatList.addEntry(user, image, s"$i-$j " + emojis.keysIterator.drop((math.random * (emojis.size - 1)).toInt).next)
   }
 }

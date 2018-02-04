@@ -13,3 +13,17 @@
 .code-block > .scroll-bar:vertical {
   visibility: hidden;
 }
+.collapsible-image {
+  -fx-text-fill: green;
+}
+.collapsible-image:hover {
+  -fx-underline: true;
+}
+.chat-list:focused > .virtual-flow > .clipped-container > .sheet > .list-cell:filled:selected:even,
+.chat-list > .virtual-flow > .clipped-container > .sheet > .list-cell:filled:selected:even {
+  -fx-background: -fx-control-inner-background;
+}
+.chat-list:focused > .virtual-flow > .clipped-container > .sheet > .list-cell:filled:selected:odd,
+.chat-list > .virtual-flow > .clipped-container > .sheet > .list-cell:filled:selected:odd {
+  -fx-background: -fx-control-inner-background-alt;
+}

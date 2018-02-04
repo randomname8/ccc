@@ -10,7 +10,7 @@ import scala.ref.WeakReference
  * the visible ones, and allowing the rest to be collected.
  */
 class WeakImage(imageLocation: String) {
-  private[this] var imageReference = WeakReference(new Image(imageLocation))
+  private[this] var imageReference = WeakReference[Image](null)
   def get: Image = imageReference.get.getOrElse {
     val res = new Image(imageLocation, true)
     imageReference = WeakReference(res)
