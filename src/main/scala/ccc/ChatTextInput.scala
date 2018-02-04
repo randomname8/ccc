@@ -1,7 +1,7 @@
 package ccc
 
 import javafx.fxml.FXMLLoader
-import javafx.scene.control.{Control, TextArea}
+import javafx.scene.control.{Control, TextArea, ScrollPane, TitledPane}
 import javafx.scene.image.Image
 import javafx.scene.layout.{VBox, Pane}
 import javafx.scene.web.WebView
@@ -24,8 +24,15 @@ class ChatTextInput(val webViewCache: util.WeakObjectPool[WebView],
     override val getNode = {
       val visual = nodeRoot.lookup(".entries-vbox").asInstanceOf[VBox]
       
-      visual.minHeightProperty bind textArea.heightProperty
-      visual.minWidthProperty bind nodeRoot.widthProperty
+      val container = visual.getParent.asInstanceOf[Pane]
+      val visualScrollPane = new ScrollPane(visual)
+      visualScrollPane.fitToWidth = true
+      visualScrollPane.fitToHeight = true
+      val previewTitledPane = new TitledPane("preview", visualScrollPane).modify(_.styleClass add "chat-preview-title-pane")
+      container.children.set(container.children.indexOf(visual), previewTitledPane)
+      
+      visualScrollPane.prefHeightProperty bind textArea.heightProperty
+      visualScrollPane.minWidthProperty bind nodeRoot.widthProperty
       
       textArea.textProperty foreach { s => 
         val nodes = if (s == null || s.isEmpty) Seq.empty 

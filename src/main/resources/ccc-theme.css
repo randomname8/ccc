@@ -6,9 +6,13 @@
 .entries-vbox {
   -fx-spacing: 0.2em;
 }
-.chat-date-label {
+.chat-date-label,
+.chat-preview-title-pane .title .text {
   -fx-text-fill: #aaa;
   -fx-font: 0.8em sans-serif;
+}
+.chat-preview-title-pane > .title {
+  -fx-padding: 0 0 0 0.5em;
 }
 .code-block > .scroll-bar:vertical {
   visibility: hidden;
@@ -19,6 +23,9 @@
 .collapsible-image:hover {
   -fx-underline: true;
 }
+
+/*background tunning for the chat list*/
+
 .chat-list:focused > .virtual-flow > .clipped-container > .sheet > .list-cell:filled:selected:even,
 .chat-list > .virtual-flow > .clipped-container > .sheet > .list-cell:filled:selected:even {
   -fx-background: -fx-control-inner-background;
