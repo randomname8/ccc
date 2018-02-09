@@ -1,3 +1,5 @@
+/*chat list tunning in general*/
+
 .avatar-pane {
   -fx-pref-height: 4em;
   -fx-pref-width: 4em;
@@ -16,6 +18,8 @@
 }
 .code-block > .scroll-bar:vertical {
   visibility: hidden;
+  -fx-min-width: 0;
+  -fx-max-width: 0;
 }
 .collapsible-image {
   -fx-text-fill: green;
@@ -24,8 +28,6 @@
   -fx-underline: true;
 }
 
-/*background tunning for the chat list*/
-
 .chat-list:focused > .virtual-flow > .clipped-container > .sheet > .list-cell:filled:selected:even,
 .chat-list > .virtual-flow > .clipped-container > .sheet > .list-cell:filled:selected:even {
   -fx-background: -fx-control-inner-background;
@@ -33,4 +35,33 @@
 .chat-list:focused > .virtual-flow > .clipped-container > .sheet > .list-cell:filled:selected:odd,
 .chat-list > .virtual-flow > .clipped-container > .sheet > .list-cell:filled:selected:odd {
   -fx-background: -fx-control-inner-background-alt;
+}
+
+/* text area input */
+
+.emoji-picker-button {
+  -fx-background-color: white;
+  -fx-graphic: url(emoji-pick-button.png);
+  
+}
+.emoji-picker-button:hover,
+.emoji-picker-button:armed {
+  -fx-background-color: white;
+  -fx-graphic: url(emoji-pick-button-hover.png)
+}
+
+/* emoji picker */
+.emoji-picker > .column-header-background {
+  visibility: hidden;
+  -fx-min-height: 0;
+  -fx-max-height: 0;
+}
+.emoji-picker-selection-button {
+  -fx-padding: 0;
+  -fx-background-color: transparent;
+}
+.emoji-picker-selection-button:hover,
+.emoji-picker-selection-button:pressed {
+  -fx-padding: 0;
+  -fx-background-color: lightgray;
 }

@@ -8,7 +8,7 @@ object EmojiOne {
 
   case class Description(filename: String, unicode: String, name: String, alphaCode: String, aliases: Array[String])
   
-  val (allEmojis, emojiLookup) = {
+  val (allEmojis, emojiLookup, emojiByAlphaCode) = {
     val settings = new CsvParserSettings()
     settings.getFormat.setLineSeparator("\n")
     val parser = new CsvParser(settings)
@@ -36,7 +36,7 @@ object EmojiOne {
       ";_;" -> indexedByUnicode("😢"),
       "T_T" -> indexedByUnicode("😭"),
     )
-    (descriptions, emojiLookup)
+    (descriptions, emojiLookup, indexedByAlphaCode)
   }
   
   /**

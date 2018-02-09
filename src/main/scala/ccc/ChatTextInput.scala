@@ -1,10 +1,12 @@
 package ccc
 
 import javafx.fxml.FXMLLoader
-import javafx.scene.control.{Control, TextArea, ScrollPane, TitledPane}
+import javafx.scene.control.{Control, TextArea, ScrollPane, TitledPane, Button}
 import javafx.scene.image.Image
 import javafx.scene.layout.{VBox, Pane}
 import javafx.scene.web.WebView
+import javafx.stage.Popup
+import javafx.stage.PopupWindow
 
 class ChatTextInput(val webViewCache: util.WeakObjectPool[WebView],
                     val imagesCache: collection.Map[String, util.WeakImage],
@@ -32,7 +34,6 @@ class ChatTextInput(val webViewCache: util.WeakObjectPool[WebView],
       container.children.set(container.children.indexOf(visual), previewTitledPane)
       
       visualScrollPane.prefHeightProperty bind textArea.heightProperty
-      visualScrollPane.minWidthProperty bind nodeRoot.widthProperty
       
       textArea.textProperty foreach { s => 
         val nodes = if (s == null || s.isEmpty) Seq.empty 
@@ -42,6 +43,22 @@ class ChatTextInput(val webViewCache: util.WeakObjectPool[WebView],
         
         visual.children.clear
         visual.children.addAll(nodes:_*)
+      }
+      
+      val popup = new Popup
+      popup.autoHide = true
+      val emojiPicker = new EmojiPicker(emojiProvider)
+      popup.content.add(emojiPicker)
+      val emojiPickerButton = nodeRoot.lookup(".emoji-picker-button").asInstanceOf[Button]
+      emojiPickerButton.onAction = _ => {
+        popup.setAnchorLocation(PopupWindow.AnchorLocation.CONTENT_BOTTOM_LEFT)
+        val pos = emojiPickerButton.localToScreen(0, 0)
+        popup.show(emojiPickerButton, pos.getX, pos.getY)
+      }
+      
+      emojiPicker.onIconPicked = evt => {
+        textArea.appendText(evt.emoji + " ")
+        popup.hide()
       }
       
       nodeRoot
