@@ -1,4 +1,4 @@
-package ccc.util
+package ccc.discord
 
 object DiscordMarkdown {
 
