@@ -37,8 +37,8 @@ class ChatTextInput(val webViewCache: util.WeakObjectPool[WebView],
       
       textArea.textProperty foreach { s =>
         val nodes = if (s == null || s.isEmpty) Seq.empty
-        else  MarkdownRenderer.render(util.DiscordMarkdown adaptToMarkdown s.replace("\n", "\n\n"),
-                                      visual.widthProperty, webViewCache.get _, imagesCache(_).get, emojiProvider)
+        else MarkdownRenderer.render(s.replace("\n", "\n\n"),
+                                     visual.widthProperty, webViewCache.get _, imagesCache(_).get, emojiProvider)
         
         visual.children.forEach { case v: WebView => webViewCache.takeBack(v); case _ => }
         
