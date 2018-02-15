@@ -14,7 +14,7 @@ object EmojiOne {
     val parser = new CsvParser(settings)
     
     val noAliases = Array.empty[String]
-    val descriptions = resourceAsStream("emojione/eac.csv").autoClosed { in =>
+    val descriptions = getClass.getClassLoader.getResourceAsStream("emojione/eac.csv").autoClosed { in =>
       parser.iterate(in, "utf-8").iterator.asScala.drop(1).map(row =>
         Description(row(0), parseUnicode(row(1)), row(2), row(3),
                     Option(row(4)).map(_.split("\\|")).getOrElse(noAliases))).toArray
