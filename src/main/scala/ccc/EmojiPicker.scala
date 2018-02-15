@@ -51,6 +51,7 @@ class EmojiPicker(val emojiProvider: Map[String, Image]) extends Control {
             super.updateItem(item, empty)
             if (!empty && item != null) {
               val iv = new ImageView(emojiProvider(item))
+              iv.setSmooth(true)
               iv.setPreserveRatio(true)
               iv.setFitWidth(EmojiWidth)
               
