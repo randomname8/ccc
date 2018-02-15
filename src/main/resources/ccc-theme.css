@@ -50,6 +50,15 @@
   -fx-graphic: url(emoji-pick-button-hover.png)
 }
 
+.emoji-autocompletion-cell {
+  -fx-content-display: left;
+  -fx-graphic-text-gap: 1em;
+}
+.emoji-autocompletion-cell-image {
+  -fx-pref-height: 1.5em;
+  -fx-pref-width: 1.5em;
+}
+
 /* emoji picker */
 .emoji-picker > .column-header-background {
   visibility: hidden;

@@ -1,3 +1,5 @@
+import javafx.scene.image.Image
+
 package object ccc {
   import javafx.beans.value.ObservableValue
   import javafx.geometry._
@@ -71,6 +73,10 @@ package object ccc {
     res
   }
   
+  val FitImageToBackground = new BackgroundSize(BackgroundSize.AUTO, BackgroundSize.AUTO, true, true, true, true)
+  def imageBackground(img: Image): Background =
+    new Background(new BackgroundImage(img, BackgroundRepeat.NO_REPEAT, BackgroundRepeat.NO_REPEAT, BackgroundPosition.CENTER, FitImageToBackground))
+  
   /*********************
    * MISC
    *********************/
@@ -94,5 +100,9 @@ package object ccc {
   
   implicit class ColorExt(val c: Color) extends AnyVal {
     def colorToWeb = "#%02X%02X%02X".format((c.getRed * 255).toInt, (c.getGreen * 255).toInt, (c.getBlue * 255).toInt)
+  }
+  
+  implicit class SafeAbscribe[T](val t: T) extends AnyVal {
+    def abscribe[U >: T]: U = t
   }
 }

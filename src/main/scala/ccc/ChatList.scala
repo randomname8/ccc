@@ -54,7 +54,7 @@ class ChatList(val webViewCache: util.WeakObjectPool[WebView],
       localWebView = Vector.empty
       
       if (!empty && item.messages.nonEmpty) {
-        avatarPane.background = new Background(new BackgroundImage(item.avatar, BackgroundRepeat.NO_REPEAT, BackgroundRepeat.NO_REPEAT, BackgroundPosition.CENTER, BackgroundSize.DEFAULT))
+        avatarPane.background = imageBackground(item.avatar)
         userLabel.text = item.user
         dateLabel.text = "yyyy/mm/dd"
         entriesVBox.children.clear()

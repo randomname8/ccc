@@ -1,7 +1,7 @@
 package ccc
 
 import javafx.fxml.FXMLLoader
-import javafx.scene.control.{Control, TextArea, ScrollPane, TitledPane, Button}
+import javafx.scene.control.{Control, TextArea, ScrollPane, TitledPane, Button, ListCell}
 import javafx.scene.image.Image
 import javafx.scene.layout.{VBox, Pane}
 import javafx.scene.web.WebView
@@ -35,9 +35,10 @@ class ChatTextInput(val webViewCache: util.WeakObjectPool[WebView],
       
       visualScrollPane.prefHeightProperty bind textArea.heightProperty
       
-      textArea.textProperty foreach { s => 
-        val nodes = if (s == null || s.isEmpty) Seq.empty 
-        else  MarkdownRenderer.render(s.replace("\n", "\n\n"), visual.widthProperty, webViewCache.get _, imagesCache(_).get, emojiProvider)
+      textArea.textProperty foreach { s =>
+        val nodes = if (s == null || s.isEmpty) Seq.empty
+        else  MarkdownRenderer.render(util.DiscordMarkdown adaptToMarkdown s.replace("\n", "\n\n"),
+                                      visual.widthProperty, webViewCache.get _, imagesCache(_).get, emojiProvider)
         
         visual.children.forEach { case v: WebView => webViewCache.takeBack(v); case _ => }
         
@@ -45,6 +46,28 @@ class ChatTextInput(val webViewCache: util.WeakObjectPool[WebView],
         visual.children.addAll(nodes:_*)
       }
       
+      val completer = util.AutoCompleter.install(textArea) { (text, word, index) =>
+        util.EmojiOne.emojiLookup.keysIterator.filter(_ startsWith word).to[Vector]
+      }
+      completer.completionsList.cellFactory = _ => new ListCell[String] {
+        this.getStyleClass add "emoji-autocompletion-cell"
+        val emoji = new Pane()
+        emoji.styleClass add "emoji-autocompletion-cell-image"
+        setMaxWidth(Double.MaxValue)
+        override def updateItem(item: String, empty: Boolean): Unit = {
+          super.updateItem(item, empty)
+          if (!empty && item != null) {
+            setText(item)
+            emoji.background = imageBackground(emojiProvider(item))
+            setGraphic(emoji)
+          } else {
+            setText(null)
+            setGraphic(null)
+          }
+        }
+      }
+      
+
       val popup = new Popup
       popup.autoHide = true
       val emojiPicker = new EmojiPicker(emojiProvider)

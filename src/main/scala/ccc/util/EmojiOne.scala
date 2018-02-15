@@ -30,6 +30,7 @@ object EmojiOne {
       ":o" -> indexedByUnicode("😮"),
       ":O" -> indexedByUnicode("😮"),
       "D:" -> indexedByUnicode("😩"),
+      ":/" -> indexedByUnicode("😕"),
       ";)" -> indexedByUnicode("😉"),
       ";p" -> indexedByUnicode("😜"),
       ";P" -> indexedByUnicode("😜"),
