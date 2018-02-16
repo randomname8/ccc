@@ -1,8 +1,8 @@
 package ccc
 
+import java.time.LocalDateTime
 import javafx.application.Application
 import javafx.scene.control.ScrollPane
-import javafx.scene.image.Image
 import javafx.scene.layout.BorderPane
 import javafx.scene.text.Font
 import javafx.scene.web.WebView
@@ -36,15 +36,15 @@ class ChatAreaTest extends BaseApplication {
       res.styleClass add "code-block"
       res
     })
-  val chatList = new ChatList(webViewCache, imagesCache, emojis.mapValues(_.get))
+  val chatList = new ChatList[String, String](webViewCache, imagesCache, emojis.mapValues(_.get), identity, identity, _ => LocalDateTime.now())
   val sceneRoot = new BorderPane {
     this center new ScrollPane(chatList).modify(_.fitToWidth = true, _.fitToHeight = true)
     this bottom new ChatTextInput(webViewCache, imagesCache, emojis.mapValues(_.get))
   }
   
   val imgSize = Font.getDefault.getSize * 4
-  val panda = new Image("https://cdn.discordapp.com/avatars/84766711735136256/28063abbe16697aa29d99d004ebd177f.png?size=256", imgSize, imgSize, true, true)
-  val totoro = new Image("https://cdn.discordapp.com/avatars/183411122848661505/81e6a9370e6a54ea19b3acad6c811e61.png?size=256", imgSize, imgSize, true, true)
+  val panda = new util.WeakImage("https://cdn.discordapp.com/avatars/84766711735136256/28063abbe16697aa29d99d004ebd177f.png?size=256", imgSize, imgSize)
+  val totoro = new util.WeakImage("https://cdn.discordapp.com/avatars/183411122848661505/81e6a9370e6a54ea19b3acad6c811e61.png?size=256", imgSize, imgSize)
   chatList.addEntry("(⊙.⊙)☂", totoro, "**How** *about* __some__ ~~markdown~~ _**rendering**_? [I'm an inline-style link](https://duckduckgo.com/ \"link with custom text!\") \n\nAnother link just in case https://duckduckgo.com/\n\nSince we are not discord, we can use markdown for images too ![alt text](http://www.kidsarthub.com/wp-content/uploads/2015/01/How_to_draw_panda_bear-136x100.jpg \"Logo Title Text 1\")")
   chatList.addEntry("(⊙.⊙)☂", totoro, "inline `code` here")
   chatList.addEntry("(⊙.⊙)☂", totoro, """code block now in scala
