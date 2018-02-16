@@ -15,9 +15,17 @@ class ChatTextInput(val webViewCache: util.WeakObjectPool[WebView],
   private[this] val nodeRoot = FXMLLoader.load[Pane](getClass.getResource("/chat-text-input.fxml"))
   val textArea = nodeRoot.lookup(".text-area").asInstanceOf[TextArea]
   textArea.textProperty foreach { t =>
-    if (t != null && t.nonEmpty) textArea.prefRowCount = t.count(_ == '\n') + 1
-    else textArea.prefRowCount = 1
+    if (t != null) {
+      val bounds = util.JfxUtils.computeTextBounds(t, textArea.getFont, textArea.getWidth - textArea.getFont.getSize) //take into account the paddings of the text area
+      textArea.setPrefHeight(bounds.getHeight + textArea.getFont.getSize)
+    } else textArea.prefRowCount = 1
   }
+  //make sure the scrollpane of the text area NEVER shows
+  textArea.sceneProperty.foreach(s => if (s!= null) {
+      textArea.applyCss()
+      textArea.lookup(".scroll-pane").asInstanceOf[ScrollPane].setVbarPolicy(ScrollPane.ScrollBarPolicy.NEVER)
+    })
+  
   override protected def createDefaultSkin = Skin
   
   object Skin extends javafx.scene.control.Skin[ChatTextInput] {
