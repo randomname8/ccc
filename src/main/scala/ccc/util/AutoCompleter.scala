@@ -39,7 +39,7 @@ object AutoCompleter {
     def calculatePopupContent() = {
       val pos = textInput.getCaretPosition
       val items = {
-        if (textInput.getLength == 0) Seq.empty
+        if (textInput.getLength == 0 || pos == 0) Seq.empty
         else {
           val prefixText = textInput.getText(0, pos)
           if (prefixText.substring(pos -1) matches "\\s") Seq.empty
