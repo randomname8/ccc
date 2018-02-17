@@ -45,7 +45,7 @@ object ScalaPropertiesForJavaGenerator {
         if properties.nonEmpty
       } yield {
         val methods = properties.flatMap { descriptor =>
-          Option(descriptor.getReadMethod).map(rm => s"@inline def `${descriptor.getName}` = _v.${rm.getName}") ++
+          Option(descriptor.getReadMethod).map(rm => s"@inline def `${descriptor.getName}` = _v.${rm.getName}()") ++
           Option(descriptor.getWriteMethod).map { wm =>
             val valuePassing = if (wm.isVarArgs) "v:_*" else "v"
             s"@inline def ${descriptor.getName}_=(v: ${adaptType(descriptor.getWriteMethod.getGenericParameterTypes()(0))}) = _v.${wm.getName}($valuePassing)"
