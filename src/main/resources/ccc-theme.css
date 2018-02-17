@@ -46,6 +46,14 @@
   -fx-background-color: #d4e5d4;
 }
 
+.md-link {
+  -fx-fill: blue;
+  -fx-underline: true;
+}
+.md-link:hover {
+  -fx-underline: false;
+}
+
 /* text area input */
 
 .emoji-picker-button {

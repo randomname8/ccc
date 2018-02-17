@@ -3,6 +3,7 @@ package ccc
 import java.time.LocalDateTime
 import javafx.application.Application
 import javafx.scene.control.ScrollPane
+import javafx.scene.input.KeyCode
 import javafx.scene.layout.BorderPane
 import javafx.scene.text.Font
 import javafx.scene.web.WebView
@@ -36,10 +37,13 @@ class ChatAreaTest extends BaseApplication {
       res.styleClass add "code-block"
       res
     })
-  val chatList = new ChatList[String, String](webViewCache, imagesCache, emojis.mapValues(_.get), identity, identity, _ => LocalDateTime.now())
+  
+  val markdownRenderer = new DefaultMarkdownNodeFactory(getHostServices, imagesCache)
+  val chatList = new ChatList[String, String](markdownRenderer, webViewCache, emojis.mapValues(_.get), identity, identity, _ => LocalDateTime.now())
+  val chatTextInput = new ChatTextInput(markdownRenderer, webViewCache, emojis.mapValues(_.get))
   val sceneRoot = new BorderPane {
     this center new ScrollPane(chatList).modify(_.fitToWidth = true, _.fitToHeight = true)
-    this bottom new ChatTextInput(webViewCache, imagesCache, emojis.mapValues(_.get))
+    this bottom chatTextInput
   }
   
   val imgSize = Font.getDefault.getSize * 4
@@ -64,5 +68,19 @@ for i in {0..7}; do sudo cpufreq-set -g performance -u 2GHz -c $i; done;
   for (i <- 0 until 100) {
     val (image, user) = if (i % 2 == 0) (totoro, "(⊙.⊙)☂") else (panda, "Panda")
     for (j <- 0 until (math.random * 5).toInt) chatList.addEntry(user, image, s"$i-$j " + emojis.keysIterator.drop((math.random * (emojis.size - 1)).toInt).next)
+  }
+  
+  
+  chatTextInput.textArea.onKeyReleased = evt => {
+    if (evt.getCode == KeyCode.ENTER) {
+      if (evt.isShiftDown) {
+        chatTextInput.textArea.insertText(chatTextInput.textArea.getCaretPosition, "\n")
+      } else if (!evt.isControlDown && !evt.isAltDown) {
+        evt.consume()
+        val msg = chatTextInput.textArea.text
+        chatTextInput.textArea.clear()
+        chatList.addEntry("(⊙.⊙)☂", totoro, msg.trim.replace("\n", "\n\n"))
+      }
+    }
   }
 }

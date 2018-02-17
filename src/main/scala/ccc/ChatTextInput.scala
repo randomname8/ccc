@@ -8,8 +8,8 @@ import javafx.scene.web.WebView
 import javafx.stage.Popup
 import javafx.stage.PopupWindow
 
-class ChatTextInput(val webViewCache: util.WeakObjectPool[WebView],
-                    val imagesCache: collection.Map[String, util.WeakImage],
+class ChatTextInput(val markdownNodeFactory: MarkdownRenderer.NodeFactory,
+                    val webViewCache: util.WeakObjectPool[WebView],
                     val emojiProvider: Map[String, Image]) extends Control {
 
   private[this] val nodeRoot = FXMLLoader.load[Pane](getClass.getResource("/chat-text-input.fxml"))
@@ -46,7 +46,8 @@ class ChatTextInput(val webViewCache: util.WeakObjectPool[WebView],
       textArea.textProperty foreach { s =>
         val nodes = if (s == null || s.isEmpty) Seq.empty
         else MarkdownRenderer.render(s.replace("\n", "\n\n"),
-                                     visual.widthProperty, webViewCache.get _, imagesCache(_).get, emojiProvider)
+                                     visual.widthProperty, webViewCache.get _, emojiProvider,
+                                     markdownNodeFactory)
         
         visual.children.forEach { case v: WebView => webViewCache.takeBack(v); case _ => }
         

@@ -2,8 +2,10 @@ package ccc
 
 import java.time.LocalDateTime
 import java.time.format.{DateTimeFormatter, FormatStyle}
+import javafx.application.HostServices
 import javafx.beans.binding.Bindings
 import javafx.beans.property.SimpleObjectProperty
+import javafx.beans.value.ObservableValue
 import javafx.collections.FXCollections
 import javafx.fxml.FXMLLoader
 import javafx.scene.Node
@@ -18,8 +20,8 @@ object ChatList {
   case class ChatBox[User, Message](user: User, avatar: util.WeakImage, messages: Vector[Message])
 }
 import ChatList._
-class ChatList[User, Message](val webViewCache: util.WeakObjectPool[WebView],
-                              val imagesCache: collection.Map[String, util.WeakImage],
+class ChatList[User, Message](val markdownNodeFactory: MarkdownRenderer.NodeFactory,
+                              val webViewCache: util.WeakObjectPool[WebView],
                               val emojiProvider: Map[String, Image],
                               val userDisplayName: User => String,
                               val messageContent: Message => String,
@@ -56,11 +58,11 @@ class ChatList[User, Message](val webViewCache: util.WeakObjectPool[WebView],
     this.graphic = pane
     private[this] var lastItem: ChatBox[User, Message] = _
     private[this] var localWebView = Vector.empty[WebView] //track the webviews used by this item in order to give them back to the pool later
+    private[this] val maxWidth: ObservableValue[_ <: Number] = Bindings.subtract(ChatList.this.widthProperty, avatarPane.widthProperty).map(_.doubleValue - 100)
     val renderMessage = (MarkdownRenderer.render(_: String,
-                                                 Bindings.subtract(ChatList.this.widthProperty, avatarPane.widthProperty).map(_.doubleValue - 100),
+                                                 maxWidth,
                                                  () => {val r = webViewCache.get; localWebView :+= r; r},
-                                                 imagesCache(_).get,
-                                                 emojiProvider)) compose messageContent
+                                                 emojiProvider, markdownNodeFactory)) compose messageContent
     override protected def updateItem(item: ChatBox[User, Message], empty: Boolean): Unit = {
       super.updateItem(item, empty)
       if (item == lastItem) return;
