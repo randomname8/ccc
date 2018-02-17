@@ -2,7 +2,6 @@ package ccc
 
 import java.time.LocalDateTime
 import java.time.format.{DateTimeFormatter, FormatStyle}
-import javafx.application.HostServices
 import javafx.beans.binding.Bindings
 import javafx.beans.property.SimpleObjectProperty
 import javafx.beans.value.ObservableValue
@@ -31,6 +30,7 @@ class ChatList[User, Message](val markdownNodeFactory: MarkdownRenderer.NodeFact
   val itemsScala = this.items.asScala
   
   val additionalMessageControlsFactory = new SimpleObjectProperty[Message => Seq[Node]](this, "additionalMessageControlsFactory", _ => Seq.empty)
+  val additionalMessageRenderFactory = new SimpleObjectProperty[(Message, ObservableValue[_ <: Number]) => Seq[Node]](this, "additionalMessageRenderFactory", (_, _) => Seq.empty)
   this.selectionModel.selectionMode = SelectionMode.MULTIPLE
   
   this.cellFactory = _ => new ChatBoxListCell()
@@ -91,7 +91,7 @@ class ChatList[User, Message](val markdownNodeFactory: MarkdownRenderer.NodeFact
     def messageBox(msg: Message): Pane = {
       val chatMessagePane = FXMLLoader.load[Pane](getClass.getResource("/chat-message.fxml"))
       val messageContainer = chatMessagePane.lookup(".chat-message").asInstanceOf[Pane]
-      val renderedMarkdown = renderMessage(msg)
+      val renderedMarkdown = renderMessage(msg) ++ additionalMessageRenderFactory.get()(msg, maxWidth)
       renderedMarkdown foreach messageContainer.children.add
       
       val controlsPane = chatMessagePane.lookup(".chat-message-controls-pane").asInstanceOf[Pane]
