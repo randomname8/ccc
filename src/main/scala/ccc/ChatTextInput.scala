@@ -90,6 +90,7 @@ class ChatTextInput(val webViewCache: util.WeakObjectPool[WebView],
       emojiPicker.onIconPicked = evt => {
         textArea.appendText(evt.emoji + " ")
         popup.hide()
+        textArea.requestFocus()
       }
       
       nodeRoot

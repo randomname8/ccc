@@ -23,15 +23,16 @@ class EmojiPicker(val emojiProvider: Map[String, Image]) extends Control {
   
   override protected def createDefaultSkin = Skin
   
-  private[this] val nodeRoot = FXMLLoader.load[Pane](getClass.getResource("/emoji-picker.fxml"))
-  
   object Skin extends javafx.scene.control.Skin[EmojiPicker] {
     val EmojisPerRow = 5
     val EmojiWidth = Font.getDefault.getSize * 2
     override def getSkinnable = EmojiPicker.this
     override def dispose = ()
     override val getNode = {
+      val nodeRoot = FXMLLoader.load[Pane](getClass.getResource("/emoji-picker.fxml"))
+      nodeRoot.focusTraversable = false
       val tableView = nodeRoot.lookup(".emoji-picker").asInstanceOf[TableView[ButtonRow]]
+      tableView.focusTraversable = false
       val searchField = nodeRoot.lookup(".emoji-picker-search").asInstanceOf[TextField]
       
       
@@ -85,8 +86,8 @@ class EmojiPicker(val emojiProvider: Map[String, Image]) extends Control {
         }
       }
       
+      util.JfxUtils.showingProperty(nodeRoot).foreach(b =>  if (b) searchField.requestFocus())
       nodeRoot.setPrefWidth((EmojiWidth * 1.7) * 5)
-      
       nodeRoot
     }
     
