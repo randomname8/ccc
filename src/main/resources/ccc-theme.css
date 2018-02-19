@@ -22,7 +22,14 @@
   -fx-max-width: 0;
 }
 .collapsible-image {
+  -fx-region-border: null;
   -fx-text-fill: green;
+}
+.collapsible-image .content,
+.collapsible-image .title {
+  -fx-region-background: null;
+  -fx-region-border: null;
+  -fx-padding: 0;
 }
 .collapsible-image:hover {
   -fx-underline: true;

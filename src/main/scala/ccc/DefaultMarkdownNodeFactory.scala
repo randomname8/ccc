@@ -4,12 +4,13 @@ import better.files._
 import javafx.animation.{Animation, KeyFrame, KeyValue, Timeline}
 import javafx.application.HostServices
 import javafx.beans.value.ObservableValue
-import javafx.scene.Node
-import javafx.scene.control.{Label, Tooltip}
+import javafx.scene.{Node, Scene}
+import javafx.scene.control.{Label, Tooltip, TitledPane, ScrollPane}
 import javafx.scene.image.{Image, ImageView}
 import javafx.scene.input.MouseButton
 import javafx.scene.text.{Font, Text}
 import javafx.scene.web.WebView
+import javafx.stage.Stage
 import javafx.util.Duration
 import netscape.javascript.JSObject
 
@@ -45,26 +46,30 @@ class DefaultMarkdownNodeFactory(
   private[this] val collapsedElementState = new util.LruMap[Any, Boolean](1000)
   
   def mkInlineImage(title: String, url: String): Node = {
-    val labelText = title + " ⮟"
-    val res = new Label()
-    res.styleClass.add("collapsible-image")
-    res.tooltip = new Tooltip(title)
-    res.onMouseClicked = evt => if (evt.button == MouseButton.PRIMARY) {
-      res.getText match {
-        case null => //image mode, switch to text mode
-          res.text = labelText
-          res.graphic = null
-          collapsedElementState(url) = true
-        case _ => //text mode, switch to image mode
-          res.text = null
-          res.graphic = new ImageView(imagesCache(url).get)
-          collapsedElementState(url) = false
-      }
-    }
-    val collapsed = collapsedElementState.get(url).getOrElse(true)
-    if (collapsed) res.text = labelText
-    else res.graphic = new ImageView(imagesCache(url).get)
-    res
+    val image = imagesCache(url).get
+    val imageView = new ImageView(image).modify(_.setFitHeight(500), _.setFitWidth(500), _.setPreserveRatio(true))
+    val container = new util.ResizableStackPane(imageView)
+    imageView.fitWidthProperty.bind(container.prefWidthProperty.map(v => if (v.doubleValue == -1) 500 else v))
+    imageView.fitHeightProperty.bind(container.prefHeightProperty.map(v => if (v.doubleValue == -1) 500 else v))
+    new TitledPane(title, container).modify(
+      _.styleClass.add("collapsible-image"),
+      _.setMaxWidth(javafx.scene.layout.Region.USE_PREF_SIZE),
+      _.expanded = collapsedElementState.get(url).getOrElse(true),
+      _.expandedProperty.foreach(collapsedElementState(url) = _),
+      _.onMouseClicked = evt => evt.button match {
+        case MouseButton.SECONDARY =>
+          val stage = new Stage()
+          stage.title = title
+          val imageView = new ImageView(image).modify(_.setPreserveRatio(true))
+          val container = new util.ResizableStackPane(imageView)
+          imageView.fitWidthProperty.bind(container.prefWidthProperty)
+          imageView.fitHeightProperty.bind(container.prefHeightProperty)
+          stage.scene = new Scene(new ScrollPane(container))
+          stage.sizeToScene()
+          stage.show()
+        case MouseButton.MIDDLE => hostServices.showDocument(url)
+        case _ =>
+      })
   }
   
   def mkLink(title: Option[String], url: String): Node = new Text(title.getOrElse(url)).modify(
