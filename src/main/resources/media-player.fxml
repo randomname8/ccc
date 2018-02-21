@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.Slider?>
+<?import javafx.scene.layout.BorderPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.StackPane?>
+
+<StackPane maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" minHeight="0.0" minWidth="0.0" prefHeight="400.0" prefWidth="600.0" styleClass="media-viewport" xmlns="http://javafx.com/javafx/9.0.4" xmlns:fx="http://javafx.com/fxml/1">
+   <children>
+      <BorderPane maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" minHeight="0.0" minWidth="0.0" styleClass="media-overlay" StackPane.alignment="BOTTOM_LEFT">
+         <bottom>
+            <HBox maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" prefWidth="600.0" spacing="10.0" styleClass="controls-pane" BorderPane.alignment="CENTER">
+               <children>
+                  <Button maxHeight="1.7976931348623157E308" maxWidth="-Infinity" mnemonicParsing="false" style="-fx-padding: 0 10 0 10;" styleClass="media-play-button" text="⏵">
+                     <HBox.margin>
+                        <Insets left="10.0" />
+                     </HBox.margin></Button>
+                  <Label maxHeight="1.7976931348623157E308" styleClass="media-progress-text" text="00:00 / 00:00" />
+                  <Slider maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" styleClass="media-progress-slider" HBox.hgrow="ALWAYS" />
+                  <Button maxHeight="1.7976931348623157E308" mnemonicParsing="false" style="-fx-padding: 0 10 0 10;" styleClass="media-sound-button" text="🔊" />
+                  <Button maxHeight="1.7976931348623157E308" mnemonicParsing="false" style="-fx-padding: 0 10 0 10;" styleClass="media-fullscreen-button" text="🖵">
+                     <HBox.margin>
+                        <Insets right="10.0" />
+                     </HBox.margin></Button>
+               </children>
+            </HBox>
+         </bottom>
+         <top>
+            <Label styleClass="media-title-label" text="Title" BorderPane.alignment="TOP_LEFT">
+               <BorderPane.margin>
+                  <Insets left="10.0" />
+               </BorderPane.margin>
+            </Label>
+         </top>
+      </BorderPane>
+   </children>
+</StackPane>

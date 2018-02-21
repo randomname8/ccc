@@ -88,10 +88,6 @@ package object ccc {
       bind(property)
       override def computeValue = f(property.getValue)
     }
-    def flatMap[U](f: T => Binding[U]): Binding[U] = new ObjectBinding[U] {
-      bind(property)
-      override def computeValue() = f(property.getValue).getValue
-    }
   }
   
   implicit class Modifier[T](val t: T) extends AnyVal {

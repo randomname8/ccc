@@ -13,6 +13,9 @@ import javafx.scene.web.WebView
 import javafx.stage.Stage
 import javafx.util.Duration
 import netscape.javascript.JSObject
+import uk.co.caprica.vlcj.component.DirectMediaPlayerComponent
+import uk.co.caprica.vlcj.player.direct.DefaultDirectMediaPlayer
+import uk.co.caprica.vlcj.player.direct.format.RV32BufferFormat
 
 class DefaultMarkdownNodeFactory(
   val hostServices: HostServices,
@@ -45,13 +48,37 @@ class DefaultMarkdownNodeFactory(
   //collapsed state
   private[this] val collapsedElementState = new util.LruMap[Any, Boolean](1000)
   
-  def mkInlineImage(title: String, url: String): Node = {
-    val image = imagesCache(url).get
-    val imageView = new ImageView(image).modify(_.setFitHeight(500), _.setFitWidth(500), _.setPreserveRatio(true))
-    val container = new util.ResizableStackPane(imageView)
-    imageView.fitWidthProperty.bind(container.prefWidthProperty.map(v => if (v.doubleValue == -1) 500 else v))
-    imageView.fitHeightProperty.bind(container.prefHeightProperty.map(v => if (v.doubleValue == -1) 500 else v))
-    new TitledPane(title, container).modify(
+  val mediaPlayerComponent = new DirectMediaPlayerComponent(new RV32BufferFormat(_, _))
+  def mkInlineContent(title: String, url: String): Node = {
+    def content() = {
+      val container = new util.ResizableStackPane()
+      val content = if (url matches ".+(avi|flv|mkv|webm|mp4)") {
+        val textureNode = new util.TextureNode(new util.VlcTexture(mediaPlayerComponent.getMediaPlayer.asInstanceOf[DefaultDirectMediaPlayer]), 60)
+        val mediaPlayer = new util.MediaPlayer()
+        mediaPlayer.content set textureNode
+        mediaPlayer.onPlay.set { () => 
+          if (!mediaPlayer.playing.get) {
+            textureNode.renderer.start()
+            mediaPlayer.playing.set(true)
+            mediaPlayerComponent.getMediaPlayer.playMedia(url)
+          } else {
+            textureNode.renderer.stop()
+            mediaPlayerComponent.getMediaPlayer.stop()
+            mediaPlayer.playing.set(false)
+          }
+        }
+        mediaPlayer
+      } else {
+        val image = imagesCache(url).get
+        val imageView = new ImageView(image).modify(_.setFitHeight(500), _.setFitWidth(500), _.setPreserveRatio(true))
+        imageView.fitWidthProperty.bind(container.prefWidthProperty.map(v => if (v.doubleValue == -1) 500 else v))
+        imageView.fitHeightProperty.bind(container.prefHeightProperty.map(v => if (v.doubleValue == -1) 500 else v))
+        imageView
+      }
+      container.children.add(content)
+      container
+    }
+    new TitledPane(title, content()).modify(
       _.styleClass.add("collapsible-image"),
       _.setMaxWidth(javafx.scene.layout.Region.USE_PREF_SIZE),
       _.expanded = collapsedElementState.get(url).getOrElse(true),
@@ -60,11 +87,7 @@ class DefaultMarkdownNodeFactory(
         case MouseButton.SECONDARY =>
           val stage = new Stage()
           stage.title = title
-          val imageView = new ImageView(image).modify(_.setPreserveRatio(true))
-          val container = new util.ResizableStackPane(imageView)
-          imageView.fitWidthProperty.bind(container.prefWidthProperty)
-          imageView.fitHeightProperty.bind(container.prefHeightProperty)
-          stage.scene = new Scene(new ScrollPane(container))
+          stage.scene = new Scene(new ScrollPane(content()))
           stage.sizeToScene()
           stage.show()
         case MouseButton.MIDDLE => hostServices.showDocument(url)

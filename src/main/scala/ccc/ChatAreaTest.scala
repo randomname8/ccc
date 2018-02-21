@@ -69,6 +69,10 @@ and some bash now
 for i in {0..7}; do sudo cpufreq-set -g performance -u 2GHz -c $i; done;
 ```
 """)
+  chatList.addEntry("(⊙.⊙)☂", totoro, """Video now, because we like videos
+
+![alt text](https://cdn.discordapp.com/attachments/307260368764534784/415004984074305556/Peek_2018-02-19_01-41.webm "prior demo of video playback!")""")
+  
   chatList.addEntry("(⊙.⊙)☂", totoro, "Some emojis now, vampire :vampire:,:chopsticks:,:grin:,:runner_tone1:,:runner_tone2:,:runner_tone3:,:runner_tone4:,😼")
   for (i <- 0 until 100) {
     val (image, user) = if (i % 2 == 0) (totoro, "(⊙.⊙)☂") else (panda, "Panda")

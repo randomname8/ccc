@@ -1,0 +1,14 @@
+.media-overlay {
+  -fx-background-color: linear-gradient(from 0% 0% to 0% 100%, #000000A0, transparent 15%, transparent 85%, #000000A0 100%);
+}
+.controls-pane {
+  -fx-pref-height: 2em;
+}
+.media-title-label {
+  -fx-font-size: 2em;
+}
+.button,
+.label {
+  -fx-background: null;
+  -fx-text-fill: white;
+}

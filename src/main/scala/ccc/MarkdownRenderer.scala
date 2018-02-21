@@ -66,7 +66,7 @@ object MarkdownRenderer {
         }
         override def visit(e: md.Emphasis) = modifyGeneratedTexts(e)(t => if (t.getFont == strongEmphasisFont) t.setFont(strongerEmphasisFont) else t.setFont(emphasisFont))
         override def visit(e: md.StrongEmphasis) = modifyGeneratedTexts(e)(t => if (t.getFont == emphasisFont) t.setFont(strongerEmphasisFont) else t.setFont(strongEmphasisFont))
-        override def visit(e: md.Image) = texts add nodeFactory.mkInlineImage(e.getTitle, e.getDestination)
+        override def visit(e: md.Image) = texts add nodeFactory.mkInlineContent(e.getTitle, e.getDestination)
         override def visit(e: md.Link) = texts add nodeFactory.mkLink(Option(e.getTitle), e.getDestination)
         override def visit(e: md.CustomNode) = {
           e match {
@@ -98,7 +98,7 @@ object MarkdownRenderer {
   
   trait NodeFactory {
     def mkEmoji(name: String, image: Image): Node
-    def mkInlineImage(title: String, url: String): Node
+    def mkInlineContent(title: String, url: String): Node
     def mkLink(title: Option[String], url: String): Node
     def mkCodeLine(code: String): Node
     def mkCodeBlock(lang: Option[String], code: String, webViewProvider: () => WebView, widthProperty: ObservableValue[_ <: Number]): Node

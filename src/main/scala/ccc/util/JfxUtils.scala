@@ -1,14 +1,11 @@
 package ccc
 package util
 
-import javafx.beans.binding.BooleanBinding
-import javafx.beans.property.ReadOnlyObjectProperty
-import javafx.beans.value.ChangeListener
-import javafx.beans.value.ObservableBooleanValue
+import javafx.beans.binding.{BooleanBinding, ObjectBinding}
+import javafx.beans.value.{ObservableBooleanValue, ObservableValue}
 import javafx.geometry.Bounds
 import javafx.scene.{Node, Scene}
-import javafx.scene.text.Font
-import javafx.scene.text.Text
+import javafx.scene.text.{Font, Text}
 import javafx.stage.Window
 
 object JfxUtils {
@@ -85,5 +82,10 @@ object JfxUtils {
       node.getProperties.put(showingPropertyKey, property)
     }
     property
+  }
+  
+  def Binding[T](values: ObservableValue[_]*)(compute: () => T): ObjectBinding[T] = new ObjectBinding[T] {
+    bind(values:_*)
+    override def computeValue = compute()
   }
 }
