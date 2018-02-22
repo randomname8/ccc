@@ -58,11 +58,11 @@ class ChatList[User, Message](val markdownNodeFactory: MarkdownRenderer.NodeFact
     this.graphic = pane
     private[this] var lastItem: ChatBox[User, Message] = _
     private[this] var localWebView = Vector.empty[WebView] //track the webviews used by this item in order to give them back to the pool later
+    private[this] var localMediaPlayers = Vector.empty[util.VlcMediaPlayer] //track the players used by this item in order to give them back to the pool later
     private[this] val maxWidth: ObservableValue[_ <: Number] = Bindings.subtract(ChatList.this.widthProperty, avatarPane.widthProperty).map(_.doubleValue - 100)
-    val renderMessage = (MarkdownRenderer.render(_: String,
-                                                 maxWidth,
-                                                 () => {val r = webViewCache.get; localWebView :+= r; r},
-                                                 emojiProvider, markdownNodeFactory)) compose messageContent
+    val renderMessage = (MarkdownRenderer.render(_: String, emojiProvider, markdownNodeFactory)(
+        MarkdownRenderer.RenderContext(() => {val r = webViewCache.get; localWebView :+= r; r},
+                                       () => {val r = new util.VlcMediaPlayer; localMediaPlayers :+= r; r}))) compose messageContent
     override protected def updateItem(item: ChatBox[User, Message], empty: Boolean): Unit = {
       super.updateItem(item, empty)
       if (item == lastItem) return;
@@ -70,6 +70,8 @@ class ChatList[User, Message](val markdownNodeFactory: MarkdownRenderer.NodeFact
       //discard our stored local web views by returning them to the cache
       localWebView foreach webViewCache.takeBack
       localWebView = Vector.empty
+      localMediaPlayers foreach (_.dispose())
+      localMediaPlayers = Vector.empty
       
       if (!empty && item.messages.nonEmpty) {
         avatarPane.background = imageBackground(item.avatar.get)
@@ -92,7 +94,14 @@ class ChatList[User, Message](val markdownNodeFactory: MarkdownRenderer.NodeFact
       val chatMessagePane = FXMLLoader.load[Pane](getClass.getResource("/chat-message.fxml"))
       val messageContainer = chatMessagePane.lookup(".chat-message").asInstanceOf[Pane]
       val renderedMarkdown = renderMessage(msg) ++ additionalMessageRenderFactory.get()(msg, maxWidth)
-      renderedMarkdown foreach messageContainer.children.add
+      renderedMarkdown foreach { n =>
+        n match {
+          case r: Region => r.maxWidthProperty bind maxWidth
+          case r: WebView => r.maxWidthProperty bind maxWidth
+          case _ => 
+        }
+        messageContainer.children.add(n)
+      }
       
       val controlsPane = chatMessagePane.lookup(".chat-message-controls-pane").asInstanceOf[Pane]
       controlsPane.visibleProperty bind chatMessagePane.hoverProperty

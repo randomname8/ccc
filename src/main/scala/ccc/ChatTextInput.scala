@@ -3,7 +3,7 @@ package ccc
 import javafx.fxml.FXMLLoader
 import javafx.scene.control.{Control, TextArea, ScrollPane, TitledPane, Button, ListCell}
 import javafx.scene.image.Image
-import javafx.scene.layout.{VBox, Pane}
+import javafx.scene.layout.{VBox, Pane, Region}
 import javafx.scene.web.WebView
 import javafx.stage.Popup
 import javafx.stage.PopupWindow
@@ -43,16 +43,31 @@ class ChatTextInput(val markdownNodeFactory: MarkdownRenderer.NodeFactory,
       
       visualScrollPane.prefHeightProperty bind textArea.heightProperty
       
+      var instantiatedPlayers = Vector.empty[util.VlcMediaPlayer]
       textArea.textProperty foreach { s =>
         val nodes = if (s == null || s.isEmpty) Seq.empty
-        else MarkdownRenderer.render(s.replace("\n", "\n\n"),
-                                     visual.widthProperty, webViewCache.get _, emojiProvider,
-                                     markdownNodeFactory)
+        else {
+          MarkdownRenderer.render(s.replace("\n", "\n\n"), emojiProvider, markdownNodeFactory)(
+            MarkdownRenderer.RenderContext(webViewCache.get _, () => {
+                val res = new util.VlcMediaPlayer
+                instantiatedPlayers +:= res
+                res
+              }))
+        }
         
         visual.children.forEach { case v: WebView => webViewCache.takeBack(v); case _ => }
+        instantiatedPlayers foreach (_.dispose())
+        instantiatedPlayers = Vector.empty
         
         visual.children.clear
-        visual.children.addAll(nodes:_*)
+        nodes foreach { n =>
+          n match {
+            case r: Region => r.maxWidthProperty bind visual.widthProperty
+            case r: WebView => r.maxWidthProperty bind visual.widthProperty
+            case _ =>
+          }
+          visual.children add n
+        }
       }
       
       val completer = util.AutoCompleter.install(textArea) { (text, word, index) =>

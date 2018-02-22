@@ -19,6 +19,7 @@ class MediaPlayer extends Control {
   val totalDuration = new SimpleLongProperty(this, "totalDuration")
   val currentTime = new SimpleLongProperty(this, "currentTime")
   val onPlay = new SimpleObjectProperty[() => Unit](this, "onPlay", () => ())
+  val onSeeking = new SimpleObjectProperty[Long => Unit](this, "onSeeking", _ => ())
   
   val content = new SimpleObjectProperty[Node](this, "content")
   
@@ -26,6 +27,7 @@ class MediaPlayer extends Control {
   object Skin extends javafx.scene.control.Skin[MediaPlayer] {
     override def getSkinnable = MediaPlayer.this
     override def dispose() = {}
+    val timeChangeBinding = JfxUtils.Binding(currentTime, totalDuration)(() => (currentTime.get, totalDuration.get)) //store the binding in a field to prevent it from being GCd
     override val getNode = {
       val root = FXMLLoader.load[StackPane](getClass.getResource("/media-player.fxml"))
       root.getStylesheets.add("/media-player.css")
@@ -40,9 +42,10 @@ class MediaPlayer extends Control {
       val progressSlider = root.lookup(".media-progress-slider").asInstanceOf[Slider]
       progressSlider.modify(
         _.min = 0, _.max = 1,
-        _.blockIncrement = 0.01)
+        _.blockIncrement = 0.01,
+        _.valueProperty foreach (n => if (!progressSlider.valueChanging) onSeeking.get()((n.doubleValue * totalDuration.get).toLong)))
       
-      JfxUtils.Binding(currentTime, totalDuration)(() => (currentTime.get, totalDuration.get)).foreach { tuple => tuple match {
+      timeChangeBinding.foreach { tuple => tuple match {
           case (currentTime, totalTime) =>
             progressSlider.value = currentTime.toDouble / totalTime
             progressText.text = s"${millisToString(currentTime)} / ${millisToString(totalTime)}"
@@ -53,17 +56,11 @@ class MediaPlayer extends Control {
       playButton.onAction = evt => onPlay.get().apply()
       playing.foreach { playing => 
         if (playing) playButton.text = "⏸"
+        else if (currentTime.get == totalDuration.get) playButton.text = "🔁"
         else playButton.text = "⏵"
       }
       
       val mediaSoundButton = root.lookup(".media-sound-button").asInstanceOf[Button]
-      volume.foreach { n =>
-        val volume = n.floatValue
-        if (volume == 0) mediaSoundButton.text = "🔇"
-        else if (volume > 0 && volume <= 33) mediaSoundButton.text = "🔈"
-        else if (volume > 33 && volume <= 66) mediaSoundButton.text = "🔉"
-        else mediaSoundButton.text = "🔊"
-      }
       val currentVolume = new Slider(0, 100, 100).modify(
         _.orientation = Orientation.VERTICAL,
         _.blockIncrement = 10)
@@ -71,6 +68,17 @@ class MediaPlayer extends Control {
         _.content add currentVolume,
         _.hideOnEscape = true, _.autoHide = true,
         _.anchorLocation = PopupWindow.AnchorLocation.CONTENT_BOTTOM_LEFT)
+      volume.foreach { n =>
+        val volume = n.floatValue
+        if (volume == 0) mediaSoundButton.text = "🔇"
+        else if (volume > 0 && volume <= 33) mediaSoundButton.text = "🔈"
+        else if (volume > 33 && volume <= 66) mediaSoundButton.text = "🔉"
+        else mediaSoundButton.text = "🔊"
+        if (currentVolume.getValue != volume) currentVolume.setValue(volume.toDouble)
+      }
+      currentVolume.valueProperty foreach { newVolume =>
+        if (!currentVolume.valueChanging) volume set newVolume.floatValue
+      }
       
       mediaSoundButton.onAction = { evt =>
         val p = mediaSoundButton.localToScreen(10, 0)

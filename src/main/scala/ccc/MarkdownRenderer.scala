@@ -1,7 +1,6 @@
 package ccc
 
 import better.files._
-import javafx.beans.value.ObservableValue
 import javafx.scene.Node
 import javafx.scene.image.Image
 import javafx.scene.text._
@@ -33,15 +32,14 @@ object MarkdownRenderer {
   private[this] val strongEmphasisFont = Font.font(Font.getDefault.getFamily, FontWeight.BOLD, Font.getDefault.getSize)
   private[this] val strongerEmphasisFont = Font.font(Font.getDefault.getFamily, FontWeight.BOLD, FontPosture.ITALIC, Font.getDefault.getSize)
   
-  def render(text: String, widthProperty: ObservableValue[_ <: Number],
-             webViewProvider: () => WebView, emojiProvider: Map[String, Image],
-             nodeFactory: NodeFactory): Seq[Node] = {
+  def render(text: String,
+             emojiProvider: Map[String, Image],
+             nodeFactory: NodeFactory)(context: RenderContext): Seq[Node] = {
     var res = Vector.empty[Node]
     var curr: Option[TextFlow] = None //the currently TextFlow buing built, starts in none because we might not build any
     def texts = {
       if (curr.isEmpty) {
         curr = Some(new TextFlow)
-        curr.get.maxWidthProperty bind widthProperty
         res :+= curr.get
       }
       curr.get.children
@@ -59,15 +57,15 @@ object MarkdownRenderer {
           for ((toReplace, emoji) <- usedEmojis) {
             val idx = text.indexOf(toReplace, lastIdx) // because of our previous split and find, the index *has* to exists
             texts add new Text(text.substring(lastIdx, idx))
-            texts add nodeFactory.mkEmoji(toReplace, emoji)
+            texts add nodeFactory.mkEmoji(context)(toReplace, emoji)
             lastIdx = idx + toReplace.length
           }
           if (lastIdx != text.length) texts add new Text(text.substring(lastIdx))
         }
         override def visit(e: md.Emphasis) = modifyGeneratedTexts(e)(t => if (t.getFont == strongEmphasisFont) t.setFont(strongerEmphasisFont) else t.setFont(emphasisFont))
         override def visit(e: md.StrongEmphasis) = modifyGeneratedTexts(e)(t => if (t.getFont == emphasisFont) t.setFont(strongerEmphasisFont) else t.setFont(strongEmphasisFont))
-        override def visit(e: md.Image) = texts add nodeFactory.mkInlineContent(e.getTitle, e.getDestination)
-        override def visit(e: md.Link) = texts add nodeFactory.mkLink(Option(e.getTitle), e.getDestination)
+        override def visit(e: md.Image) = texts add nodeFactory.mkInlineContent(context)(e.getTitle, e.getDestination)
+        override def visit(e: md.Link) = texts add nodeFactory.mkLink(context)(Option(e.getTitle), e.getDestination)
         override def visit(e: md.CustomNode) = {
           e match {
             case e: mdext.gfm.strikethrough.Strikethrough => modifyGeneratedTexts(e)(_.setStrikethrough(true))
@@ -75,10 +73,10 @@ object MarkdownRenderer {
             case _ => visitChildren(e)
           }
         }
-        override def visit(e: md.Code) = texts add nodeFactory.mkCodeLine(e.getLiteral)
+        override def visit(e: md.Code) = texts add nodeFactory.mkCodeLine(context)(e.getLiteral)
         override def visit(e: md.FencedCodeBlock) = {
           curr = None
-          res :+= nodeFactory.mkCodeBlock(Option(e.getInfo), e.getLiteral, webViewProvider, widthProperty)
+          res :+= nodeFactory.mkCodeBlock(context)(Option(e.getInfo), e.getLiteral)
         }
         def modifyGeneratedTexts(n: md.Node)(f: Text => Unit): Unit = {
           val start = texts.size
@@ -96,11 +94,12 @@ object MarkdownRenderer {
     res
   }
   
+  case class RenderContext(webViewProvider: () => WebView, mediaPlayerProvider: () => util.VlcMediaPlayer)
   trait NodeFactory {
-    def mkEmoji(name: String, image: Image): Node
-    def mkInlineContent(title: String, url: String): Node
-    def mkLink(title: Option[String], url: String): Node
-    def mkCodeLine(code: String): Node
-    def mkCodeBlock(lang: Option[String], code: String, webViewProvider: () => WebView, widthProperty: ObservableValue[_ <: Number]): Node
+    def mkEmoji(context: RenderContext)(name: String, image: Image): Node
+    def mkInlineContent(context: RenderContext)(title: String, url: String): Node
+    def mkLink(context: RenderContext)(title: Option[String], url: String): Node
+    def mkCodeLine(context: RenderContext)(code: String): Node
+    def mkCodeBlock(context: RenderContext)(lang: Option[String], code: String): Node
   }
 }
