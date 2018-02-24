@@ -5,6 +5,9 @@ import javafx.scene.Node
 import javafx.scene.image.Image
 import javafx.scene.text._
 import javafx.scene.web.WebView
+import org.commonmark.node.BulletList
+import org.commonmark.node.ListItem
+import org.commonmark.node.OrderedList
 import org.commonmark.{node => md, ext => mdext}
 import scala.collection.JavaConverters._
 
@@ -78,6 +81,29 @@ object MarkdownRenderer {
           curr = None
           res :+= nodeFactory.mkCodeBlock(context)(Option(e.getInfo), e.getLiteral)
         }
+        
+        var currentOrderedListNumber: Int = _
+        override def visit(e: OrderedList) = {
+          currentOrderedListNumber = e.getStartNumber
+          visitChildren(e)
+        }
+        override def visit(e: ListItem) = {
+          val currElem = texts.size
+          visitChildren(e)
+          val toInsert = e.getParent match {
+            case _: OrderedList => 
+              val res = f"$currentOrderedListNumber% 3d. "
+              currentOrderedListNumber += 1
+              res
+            case _ => " • "
+          }
+          texts.get(currElem) match {
+            case t: Text => t.setText(toInsert + t.getText)
+            case _ => texts.add(currElem, new Text(toInsert))
+          }
+          
+        }
+        
         def modifyGeneratedTexts(n: md.Node)(f: Text => Unit): Unit = {
           val start = texts.size
           visitChildren(n)
