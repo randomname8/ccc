@@ -58,14 +58,14 @@ class TextureNode(val texture: Texture, val targetFps: Int) extends StackPane {
   boundsInParentProperty foreach (_ => calculateCanvasScaling())
   private def calculateCanvasScaling(): Unit = {
     val (width, height) = (getWidth, getHeight) 
-    val canvasBounds = canvas.boundsInLocal
+    val canvasBounds = canvas.getBoundsInLocal
     val ratio = {
-      if (width > height) height / canvasBounds.height
-      else width / canvasBounds.width
+      if (width > height) height / canvasBounds.getHeight
+      else width / canvasBounds.getWidth
     }
     if (!ratio.isInfinity && !ratio.isNaN) {
-      canvas.scaleX = ratio
-      canvas.scaleY = ratio
+      canvas setScaleX ratio
+      canvas setScaleY ratio
     }
   }
 }

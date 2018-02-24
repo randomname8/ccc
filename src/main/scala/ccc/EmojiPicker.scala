@@ -30,9 +30,9 @@ class EmojiPicker(val emojiProvider: Map[String, Image]) extends Control {
     override def dispose = ()
     override val getNode = {
       val nodeRoot = FXMLLoader.load[Pane](getClass.getResource("/emoji-picker.fxml"))
-      nodeRoot.focusTraversable = false
+      nodeRoot setFocusTraversable false
       val tableView = nodeRoot.lookup(".emoji-picker").asInstanceOf[TableView[ButtonRow]]
-      tableView.focusTraversable = false
+      tableView setFocusTraversable false
       val searchField = nodeRoot.lookup(".emoji-picker-search").asInstanceOf[TextField]
       
       
@@ -44,10 +44,10 @@ class EmojiPicker(val emojiProvider: Map[String, Image]) extends Control {
       val columns = tableView.getColumns
       for (i <- 0 until EmojisPerRow) { //configure the columns with the cellValueFactory and the cellFactory with the buttons
         val column = new TableColumn[ButtonRow, String](i.toString)
-        column.cellValueFactory = features => new SimpleObjectProperty(features.getValue.buttons.drop(i).take(1).headOption.getOrElse(null))
-        column.cellFactory = _ => new TableCell[ButtonRow, String] {
+        column setCellValueFactory { features => new SimpleObjectProperty(features.getValue.buttons.drop(i).take(1).headOption.getOrElse(null)) }
+        column setCellFactory { _ => new TableCell[ButtonRow, String] {
           val btn = new Button()
-          btn.styleClass.add("emoji-picker-selection-button")
+          btn.getStyleClass.add("emoji-picker-selection-button")
           override protected def updateItem(item: String, empty: Boolean): Unit = {
             super.updateItem(item, empty)
             if (!empty && item != null) {
@@ -57,34 +57,34 @@ class EmojiPicker(val emojiProvider: Map[String, Image]) extends Control {
               iv.setFitWidth(EmojiWidth)
               
               btn.setGraphic(iv)
-              btn.onAction = evt => firePickedImage(item)
+              btn setOnAction { evt => firePickedImage(item) }
               setGraphic(btn)
               
             } else setGraphic(null)
           }
-        }
+        }}
         columns.add(column)
       }
       
       val emojis = util.EmojiOne.emojiByAlphaCode.keys.toSeq.sorted
       val allGroups = emojis.grouped(EmojisPerRow).map(ButtonRow).toArray
-      tableView.items.addAll(allGroups:_*)
+      tableView.getItems.addAll(allGroups:_*)
       
       searchField.textProperty.addListener { (_, _, text) =>
-        tableView.items.clear()
-        if (text.isEmpty) tableView.items.addAll(allGroups:_*)
+        tableView.getItems.clear()
+        if (text.isEmpty) tableView.getItems.addAll(allGroups:_*)
         else {
-          tableView.items.addAll(emojis.filter(_ contains text).grouped(EmojisPerRow).map(ButtonRow).toArray:_*)
+          tableView.getItems.addAll(emojis.filter(_ contains text).grouped(EmojisPerRow).map(ButtonRow).toArray:_*)
         }
       }
-      searchField.onAction = evt => {
-        if (searchField.text.nonEmpty) for {
-          row <- tableView.items.asScala.headOption
+      searchField setOnAction { evt => {
+        if (searchField.getText.nonEmpty) for {
+          row <- tableView.getItems.asScala.headOption
           img <- row.buttons.headOption
         } {
           firePickedImage(img)
         }
-      }
+      }}
       
       util.JfxUtils.showingProperty(nodeRoot).foreach(b =>  if (b) searchField.requestFocus())
       nodeRoot.setPrefWidth((EmojiWidth * 1.7) * 5)

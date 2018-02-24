@@ -21,21 +21,21 @@ class DefaultMarkdownNodeFactory(
     val desiredImageHeight = Font.getDefault.getSize * 1.5
     val emojiImageView = new ImageView(image).modify(_.setPreserveRatio(true), _.setSmooth(true), _.setFitHeight(desiredImageHeight))
     val emojiLabel = new Label(null, emojiImageView)
-    emojiLabel.tooltip = new Tooltip(name)
+    emojiLabel setTooltip new Tooltip(name)
     val expandAnimation = new Timeline(
       new KeyFrame(Duration.millis(0), new KeyValue(emojiImageView.fitHeightProperty(), desiredImageHeight: Number)),
       new KeyFrame(Duration.millis(200), new KeyValue(emojiImageView.fitHeightProperty(), 128.0: Number)))
-    emojiLabel.onMouseClicked = evt => if (evt.button == MouseButton.PRIMARY) {
+    emojiLabel setOnMouseClicked {evt => if (evt.getButton == MouseButton.PRIMARY) {
       expandAnimation.setRate(1)
       expandAnimation.playFromStart()
-    }
-    emojiLabel.onMouseExited = evt => if (emojiImageView.getFitHeight != desiredImageHeight) {
+    }}
+    emojiLabel setOnMouseExited { evt => if (emojiImageView.getFitHeight != desiredImageHeight) {
       expandAnimation.setRate(-1)
       if (expandAnimation.getStatus == Animation.Status.STOPPED) {
         expandAnimation.jumpTo(Duration.millis(200))
         expandAnimation.play()
       }
-    }
+    }}
     emojiLabel
   }
   
@@ -57,30 +57,30 @@ class DefaultMarkdownNodeFactory(
         imageView.fitHeightProperty.bind(container.prefHeightProperty.map(v => if (v.doubleValue == -1) 500 else v))
         imageView
       }
-      container.children.add(content)
+      container.getChildren.add(content)
       container
     }
     new TitledPane(title, content()).modify(
-      _.styleClass.add("collapsible-image"),
+      _.getStyleClass.add("collapsible-image"),
       _.setMaxWidth(javafx.scene.layout.Region.USE_PREF_SIZE),
-      _.expanded = collapsedElementState.get(url).getOrElse(true),
+      _ setExpanded collapsedElementState.get(url).getOrElse(true),
       _.expandedProperty.foreach(collapsedElementState(url) = _),
-      self => self.onMouseClicked = evt => evt.button match {
+      self => self setOnMouseClicked { evt => evt.getButton match {
         case MouseButton.SECONDARY =>
           val stage = new Stage()
-          stage initOwner self.scene.window
-          stage.title = title
-          stage.scene = new Scene(new ScrollPane(content()))
+          stage initOwner self.getScene.getWindow
+          stage setTitle title
+          stage setScene new Scene(new ScrollPane(content()))
           stage.sizeToScene()
           stage.show()
         case MouseButton.MIDDLE => hostServices.showDocument(url)
         case _ =>
-      })
+      }})
   }
   
   def mkLink(context)(title, url): Node = new Text(title.getOrElse(url)).modify(
-    _.styleClass.add("md-link"),
-    _.onMouseClicked = evt => if (evt.button == MouseButton.PRIMARY) hostServices.showDocument(url))
+    _.getStyleClass.add("md-link"),
+    _ setOnMouseClicked { evt => if (evt.getButton == MouseButton.PRIMARY) hostServices.showDocument(url) })
 
   def mkCodeLine(context)(code): Node = new Label(code).modify(_.setFont(monoscriptFont), _.setStyle("-fx-background-color: lightgray;"))
   
@@ -100,15 +100,15 @@ class DefaultMarkdownNodeFactory(
 <pre><code class="$langClass" id="code">$content</code></pre>
 </body>
 </html>"""
-    webView.engine.loadWorker.stateProperty.addListener { (_, _, state) => 
+    webView.getEngine.getLoadWorker.stateProperty.addListener { (_, _, state) => 
       if (state == javafx.concurrent.Worker.State.SUCCEEDED) {
-        val el = webView.engine.document.getElementById("code")
+        val el = webView.getEngine.getDocument.getElementById("code")
         val height = el.asInstanceOf[JSObject].getMember("scrollHeight").asInstanceOf[Int].toDouble + Font.getDefault.getSize * 2
         webView.setMinHeight(height)
         webView.setMaxHeight(height + Font.getDefault.getSize)
       }
     }
-    webView.engine.loadContent(html)
+    webView.getEngine.loadContent(html)
     webView
   }
 }

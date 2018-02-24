@@ -16,13 +16,13 @@ object ChatAreaTest extends App {
 }
 class ChatAreaTest extends BaseApplication {
   override def extraInitialize(stage: Stage): Unit = {
-    stage.title = "CCC"
-    stage.width = 700
-    stage.height = 700
-    stage.scene.stylesheets.add("/ccc-theme.css")
+    stage setTitle "CCC"
+    stage setWidth 700
+    stage setHeight 700
+    stage.getScene.getStylesheets.add("/ccc-theme.css")
   }
   
-  val emojis = util.EmojiOne.emojiLookup.map(e => e._1 -> new util.WeakImage(s"/emojione/128x128_png/${e._2.filename}.png"))
+  val emojis = util.EmojiOne.emojiLookup.map(e => e._1 -> new util.WeakImage(s"file:emojione_128/${e._2.filename}.png"))
   private[this] val imagesCache: collection.mutable.Map[String, util.WeakImage] = new util.LruMap[String, util.WeakImage](100).withDefault { k => // cache the most recent images shown in the chat
     val res = new util.WeakImage(k)
     imagesCache(k) = res
@@ -33,8 +33,8 @@ class ChatAreaTest extends BaseApplication {
    */
   private[this] val webViewCache = new util.WeakObjectPool[WebView](() => {
       val res = new WebView()
-      res.contextMenuEnabled = false
-      res.styleClass add "code-block"
+      res setContextMenuEnabled false
+      res.getStyleClass add "code-block"
       res
     })
   
@@ -42,7 +42,7 @@ class ChatAreaTest extends BaseApplication {
   val chatList = new ChatList[String, String](markdownRenderer, webViewCache, emojis.mapValues(_.get), identity, identity, _ => LocalDateTime.now())
   val chatTextInput = new ChatTextInput(markdownRenderer, webViewCache, emojis.mapValues(_.get))
   val sceneRoot = new BorderPane {
-    this center new ScrollPane(chatList).modify(_.fitToWidth = true, _.fitToHeight = true)
+    this center new ScrollPane(chatList).modify(_ setFitToWidth true, _ setFitToHeight true)
     this bottom chatTextInput
   }
   
@@ -80,13 +80,13 @@ for i in {0..7}; do sudo cpufreq-set -g performance -u 2GHz -c $i; done;
   }
   
   
-  chatTextInput.textArea.onKeyReleased = evt => {
+  chatTextInput.textArea setOnKeyReleased { evt =>
     if (evt.getCode == KeyCode.ENTER) {
       if (evt.isShiftDown) {
         chatTextInput.textArea.insertText(chatTextInput.textArea.getCaretPosition, "\n")
       } else if (!evt.isControlDown && !evt.isAltDown) {
         evt.consume()
-        val msg = chatTextInput.textArea.text
+        val msg = chatTextInput.textArea.getText
         chatTextInput.textArea.clear()
         chatList.addEntry("(⊙.⊙)☂", totoro, msg.trim.replace("\n", "\n\n"))
       }

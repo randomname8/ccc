@@ -43,21 +43,21 @@ object JfxUtils {
         bind(node.sceneProperty)
         onInvalidating()
       
-        override def computeValue(): Boolean = window != null && window.showing
+        override def computeValue(): Boolean = window != null && window.isShowing
         
         override def onInvalidating(): Unit = {
           //check if transitioning from no-scene to scene
-          if (scene == null && node.scene != null) {
-            scene = node.scene
-            bind(node.scene.windowProperty)
-            if (node.scene.window != null) {
+          if (scene == null && node.getScene != null) {
+            scene = node.getScene
+            bind(node.getScene.windowProperty)
+            if (node.getScene.getWindow != null) {
               if (window != null) unbind(window.showingProperty)
-              window = node.scene.window
-              bind(node.scene.window.showingProperty)
+              window = node.getScene.getWindow
+              bind(node.getScene.getWindow.showingProperty)
             }
           } 
           //check if transitioning from scene to no-scene
-          if (node.scene == null && scene != null) {
+          if (node.getScene == null && scene != null) {
             unbind(scene.windowProperty)
             if (window != null) {
               unbind(window.showingProperty)
@@ -66,14 +66,14 @@ object JfxUtils {
             scene = null
           }
           
-          if (node.scene != null) {
+          if (node.getScene != null) {
             //check if transitioning from window to no-window
-            if (window != null && node.scene.window == null) {
+            if (window != null && node.getScene.getWindow == null) {
               unbind(window.showingProperty)
               window = null
             } 
             // check if transitioning from no-window to window
-            if (window == null && node.scene.window != null) {
+            if (window == null && node.getScene.getWindow != null) {
               bind(window.showingProperty)
             }
           }

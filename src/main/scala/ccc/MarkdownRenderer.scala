@@ -42,7 +42,7 @@ object MarkdownRenderer {
         curr = Some(new TextFlow)
         res :+= curr.get
       }
-      curr.get.children
+      curr.get.getChildren
     }
     
     markdownParser.parse(text).accept(new md.AbstractVisitor {

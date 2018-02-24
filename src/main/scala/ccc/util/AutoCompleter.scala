@@ -26,14 +26,14 @@ object AutoCompleter {
     completionProvider: (FullText, Word, IndexInText) => Seq[String]): Instance = {
     
     val completionPopup = new Popup()
-    completionPopup.anchorLocation = PopupWindow.AnchorLocation.WINDOW_BOTTOM_LEFT
-    completionPopup.hideOnEscape = true
-    completionPopup.autoHide = true
-    completionPopup.width = textInput.getWidth
+    completionPopup setAnchorLocation PopupWindow.AnchorLocation.WINDOW_BOTTOM_LEFT
+    completionPopup setHideOnEscape true
+    completionPopup setAutoHide true
+    completionPopup setWidth textInput.getWidth
     textInput.widthProperty foreach (n => completionPopup.setWidth(n.doubleValue))
     val completionList = new ListView[String]
     completionList.prefWidthProperty bind textInput.widthProperty
-    completionPopup.content.add(completionList)
+    completionPopup.getContent.add(completionList)
     
     var completionForWord: Word = null
     def calculatePopupContent() = {
@@ -50,9 +50,9 @@ object AutoCompleter {
         }
       }
 
-      completionList.items.clear()
+      completionList.getItems.clear()
       if (items.nonEmpty) {
-        completionList.items.addAll(items:_*)
+        completionList.getItems.addAll(items:_*)
         completionPopup setHeight completionList.getPrefHeight
         val point = textInput.localToScreen(0, 0)
         completionPopup.show(textInput, point.getX, point.getY)
@@ -70,7 +70,7 @@ object AutoCompleter {
       if (completionPopup.isShowing) {
         val captured: Boolean = evt.getCode match {
           case KeyCode.TAB | KeyCode.ENTER =>
-            Option(completionList.getSelectionModel.getSelectedItem).orElse(completionList.items.asScala.headOption) foreach { selected =>
+            Option(completionList.getSelectionModel.getSelectedItem).orElse(completionList.getItems.asScala.headOption) foreach { selected =>
               val toComplete = selected.stripPrefix(completionForWord)
               textInput.insertText(textInput.getCaretPosition, toComplete + " ")
             }

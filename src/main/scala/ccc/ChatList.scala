@@ -25,15 +25,15 @@ class ChatList[User, Message](val markdownNodeFactory: MarkdownRenderer.NodeFact
                               val userDisplayName: User => String,
                               val messageContent: Message => String,
                               val messageDate: Message => LocalDateTime) extends ListView[ChatBox[User, Message]] {
-  this.styleClass.add("chat-list")
-  this.items = FXCollections.observableList(new java.util.LinkedList())
-  val itemsScala = this.items.asScala
+  getStyleClass.add("chat-list")
+  setItems(FXCollections.observableList(new java.util.LinkedList()))
+  val itemsScala = getItems.asScala
   
   val additionalMessageControlsFactory = new SimpleObjectProperty[Message => Seq[Node]](this, "additionalMessageControlsFactory", _ => Seq.empty)
   val additionalMessageRenderFactory = new SimpleObjectProperty[(Message, ObservableValue[_ <: Number]) => Seq[Node]](this, "additionalMessageRenderFactory", (_, _) => Seq.empty)
-  this.selectionModel.selectionMode = SelectionMode.MULTIPLE
+  getSelectionModel setSelectionMode SelectionMode.MULTIPLE
   
-  this.cellFactory = _ => new ChatBoxListCell()
+  setCellFactory(_ => new ChatBoxListCell())
   
   def addEntry(user: User, avatar: util.WeakImage, message: Message): Unit = {
     itemsScala.lastOption match {
@@ -52,10 +52,10 @@ class ChatList[User, Message](val markdownNodeFactory: MarkdownRenderer.NodeFact
   private class ChatBoxListCell extends ListCell[ChatBox[User, Message]] {
     val pane = FXMLLoader.load[Pane](getClass.getResource("/chat-box-entry.fxml"))
     val avatarPane = pane.lookup(".avatar-pane").asInstanceOf[Pane]
-    val userLabel = pane.lookup(".user-label").asInstanceOf[Label].modify(_.text = "")
-    val dateLabel = pane.lookup(".chat-date-label").asInstanceOf[Label].modify(_.text = "")
+    val userLabel = pane.lookup(".user-label").asInstanceOf[Label].modify(_ setText "")
+    val dateLabel = pane.lookup(".chat-date-label").asInstanceOf[Label].modify(_ setText "")
     val entriesVBox = pane.lookup(".entries-vbox").asInstanceOf[VBox]
-    this.graphic = pane
+    setGraphic(pane)
     private[this] var lastItem: ChatBox[User, Message] = _
     private[this] var localWebView = Vector.empty[WebView] //track the webviews used by this item in order to give them back to the pool later
     private[this] var localMediaPlayers = Vector.empty[util.VlcMediaPlayer] //track the players used by this item in order to give them back to the pool later
@@ -74,19 +74,19 @@ class ChatList[User, Message](val markdownNodeFactory: MarkdownRenderer.NodeFact
       localMediaPlayers = Vector.empty
       
       if (!empty && item.messages.nonEmpty) {
-        avatarPane.background = imageBackground(item.avatar.get)
-        userLabel.text = userDisplayName(item.user)
+        avatarPane setBackground imageBackground(item.avatar.get)
+        userLabel setText userDisplayName(item.user)
         val date = messageDate(item.messages.head)
-        dateLabel.text = date.format(messagesDateTimeFormat)
-        entriesVBox.children.clear()
+        dateLabel setText date.format(messagesDateTimeFormat)
+        entriesVBox.getChildren.clear()
         
-        for (msg <- item.messages) entriesVBox.children add messageBox(msg)
+        for (msg <- item.messages) entriesVBox.getChildren add messageBox(msg)
 
       } else {
-        avatarPane.background = null
-        userLabel.text = null
-        dateLabel.text = null
-        entriesVBox.children.clear()
+        avatarPane setBackground null
+        userLabel setText null
+        dateLabel setText null
+        entriesVBox.getChildren.clear()
       }
     }
     
@@ -100,38 +100,38 @@ class ChatList[User, Message](val markdownNodeFactory: MarkdownRenderer.NodeFact
           case r: WebView => r.maxWidthProperty bind maxWidth
           case _ => 
         }
-        messageContainer.children.add(n)
+        messageContainer.getChildren.add(n)
       }
       
       val controlsPane = chatMessagePane.lookup(".chat-message-controls-pane").asInstanceOf[Pane]
       controlsPane.visibleProperty bind chatMessagePane.hoverProperty
       
-      Option(additionalMessageControlsFactory.get).foreach(_(msg) foreach controlsPane.children.add)
+      Option(additionalMessageControlsFactory.get).foreach(_(msg) foreach controlsPane.getChildren.add)
       
       val ShowSourceMode = new Tooltip("Show source")
       val HideSourceMode = new Tooltip("Hide source")
-      controlsPane.children add new Button("🗏").modify(
-        _.tooltip = ShowSourceMode,
-        button => button.onAction = { evt =>
-          messageContainer.children.clear()
+      controlsPane.getChildren add new Button("🗏").modify(
+        _ setTooltip ShowSourceMode,
+        button => button setOnAction { evt =>
+          messageContainer.getChildren.clear()
           button.getTooltip match {
             case ShowSourceMode =>
-              messageContainer.children add new TextArea(messageContent(msg)).modify(
-                _.editable = false, _.wrapText = true,
+              messageContainer.getChildren add new TextArea(messageContent(msg)).modify(
+                _ setEditable false, _ setWrapText true,
                 ta => {
                   val bounds = util.JfxUtils.computeTextBounds(ta.getText, ta.getFont)
                   ta.setPrefSize(bounds.getWidth, bounds.getHeight)
                 })
-              button.tooltip = HideSourceMode
+              button setTooltip HideSourceMode
             case HideSourceMode =>
-              renderedMarkdown foreach messageContainer.children.add
-              button.tooltip = ShowSourceMode
+              renderedMarkdown foreach messageContainer.getChildren.add
+              button setTooltip ShowSourceMode
               
           }
         })
-      controlsPane.children add new Button("🗐").modify(
-        _.tooltip = new Tooltip("Copy"),
-        _.onAction = evt => Clipboard.getSystemClipboard setContent new ClipboardContent().modify(_.putString(messageContent(msg))))
+      controlsPane.getChildren add new Button("🗐").modify(
+        _ setTooltip new Tooltip("Copy"),
+        _ setOnAction { evt => Clipboard.getSystemClipboard setContent new ClipboardContent().modify(_.putString(messageContent(msg)))})
       
       chatMessagePane
     }

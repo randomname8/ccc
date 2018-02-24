@@ -41,58 +41,58 @@ class MediaPlayer extends Control {
       val progressText = root.lookup(".media-progress-text").asInstanceOf[Label]
       val progressSlider = root.lookup(".media-progress-slider").asInstanceOf[Slider]
       progressSlider.modify(
-        _.min = 0, _.max = 1,
-        _.blockIncrement = 0.01,
-        _.valueProperty foreach (n => if (!progressSlider.valueChanging) onSeeking.get()((n.doubleValue * totalDuration.get).toLong)))
+        _ setMin 0, _ setMax 1,
+        _ setBlockIncrement 0.01,
+        _.valueProperty foreach (n => if (!progressSlider.isValueChanging) onSeeking.get()((n.doubleValue * totalDuration.get).toLong)))
       
       timeChangeBinding.foreach { tuple => tuple match {
           case (currentTime, totalTime) =>
-            progressSlider.value = currentTime.toDouble / totalTime
-            progressText.text = s"${millisToString(currentTime)} / ${millisToString(totalTime)}"
+            progressSlider setValue currentTime.toDouble / totalTime
+            progressText setText s"${millisToString(currentTime)} / ${millisToString(totalTime)}"
         }
       }
       
       val playButton = root.lookup(".media-play-button").asInstanceOf[Button]
-      playButton.onAction = evt => onPlay.get().apply()
+      playButton setOnAction { evt => onPlay.get().apply()
       playing.foreach { playing => 
-        if (playing) playButton.text = "⏸"
-        else if (currentTime.get == totalDuration.get) playButton.text = "🔁"
-        else playButton.text = "⏵"
-      }
+        if (playing) playButton setText "⏸"
+        else if (currentTime.get == totalDuration.get) playButton setText "🔁"
+        else playButton setText "⏵"
+      }}
       
       val mediaSoundButton = root.lookup(".media-sound-button").asInstanceOf[Button]
       val currentVolume = new Slider(0, 100, 100).modify(
-        _.orientation = Orientation.VERTICAL,
-        _.blockIncrement = 10)
+        _ setOrientation Orientation.VERTICAL,
+        _ setBlockIncrement 10)
       val volumePopup = new Popup().modify(
-        _.content add currentVolume,
-        _.hideOnEscape = true, _.autoHide = true,
-        _.anchorLocation = PopupWindow.AnchorLocation.CONTENT_BOTTOM_LEFT)
+        _.getContent add currentVolume,
+        _ setHideOnEscape true, _ setAutoHide true,
+        _ setAnchorLocation PopupWindow.AnchorLocation.CONTENT_BOTTOM_LEFT)
       volume.foreach { n =>
         val volume = n.floatValue
-        if (volume == 0) mediaSoundButton.text = "🔇"
-        else if (volume > 0 && volume <= 33) mediaSoundButton.text = "🔈"
-        else if (volume > 33 && volume <= 66) mediaSoundButton.text = "🔉"
-        else mediaSoundButton.text = "🔊"
+        if (volume == 0) mediaSoundButton setText "🔇"
+        else if (volume > 0 && volume <= 33) mediaSoundButton setText "🔈"
+        else if (volume > 33 && volume <= 66) mediaSoundButton setText "🔉"
+        else mediaSoundButton setText "🔊"
         if (currentVolume.getValue != volume) currentVolume.setValue(volume.toDouble)
       }
       currentVolume.valueProperty foreach { newVolume =>
-        if (!currentVolume.valueChanging) volume set newVolume.floatValue
+        if (!currentVolume.isValueChanging) volume set newVolume.floatValue
       }
       
-      mediaSoundButton.onAction = { evt =>
+      mediaSoundButton setOnAction { evt =>
         val p = mediaSoundButton.localToScreen(10, 0)
-        volumePopup.show(mediaSoundButton, p.x, p.y)
+        volumePopup.show(mediaSoundButton, p.getX, p.getY)
       }
       
       val fullscreenButton = root.lookup(".media-fullscreen-button").asInstanceOf[Button]
       
       content.foreach { node =>
-        if (root.children.size == 1) {
-          if (node != null) root.children.add(0, node)
+        if (root.getChildren.size == 1) {
+          if (node != null) root.getChildren.add(0, node)
         } else {
-          if (node != null) root.children.set(0, node)
-          else root.children.remove(0)
+          if (node != null) root.getChildren.set(0, node)
+          else root.getChildren.remove(0)
         }
       }
       val c = content.get

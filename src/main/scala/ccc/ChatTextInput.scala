@@ -18,7 +18,7 @@ class ChatTextInput(val markdownNodeFactory: MarkdownRenderer.NodeFactory,
     if (t != null) {
       val bounds = util.JfxUtils.computeTextBounds(t, textArea.getFont, textArea.getWidth - textArea.getFont.getSize) //take into account the paddings of the text area
       textArea.setPrefHeight(bounds.getHeight + textArea.getFont.getSize)
-    } else textArea.prefRowCount = 1
+    } else textArea setPrefRowCount 1
   }
   //make sure the scrollpane of the text area NEVER shows
   textArea.sceneProperty.foreach(s => if (s!= null) {
@@ -36,10 +36,10 @@ class ChatTextInput(val markdownNodeFactory: MarkdownRenderer.NodeFactory,
       
       val container = visual.getParent.asInstanceOf[Pane]
       val visualScrollPane = new ScrollPane(visual)
-      visualScrollPane.fitToWidth = true
-      visualScrollPane.fitToHeight = true
-      val previewTitledPane = new TitledPane("preview", visualScrollPane).modify(_.styleClass add "chat-preview-title-pane")
-      container.children.set(container.children.indexOf(visual), previewTitledPane)
+      visualScrollPane setFitToWidth true
+      visualScrollPane setFitToHeight true
+      val previewTitledPane = new TitledPane("preview", visualScrollPane).modify(_.getStyleClass add "chat-preview-title-pane")
+      container.getChildren.set(container.getChildren.indexOf(visual), previewTitledPane)
       
       visualScrollPane.prefHeightProperty bind textArea.heightProperty
       
@@ -55,53 +55,53 @@ class ChatTextInput(val markdownNodeFactory: MarkdownRenderer.NodeFactory,
               }))
         }
         
-        visual.children.forEach { case v: WebView => webViewCache.takeBack(v); case _ => }
+        visual.getChildren.forEach { case v: WebView => webViewCache.takeBack(v); case _ => }
         instantiatedPlayers foreach (_.dispose())
         instantiatedPlayers = Vector.empty
         
-        visual.children.clear
+        visual.getChildren.clear
         nodes foreach { n =>
           n match {
             case r: Region => r.maxWidthProperty bind visual.widthProperty
             case r: WebView => r.maxWidthProperty bind visual.widthProperty
             case _ =>
           }
-          visual.children add n
+          visual.getChildren add n
         }
       }
       
       val completer = util.AutoCompleter.install(textArea) { (text, word, index) =>
         util.EmojiOne.emojiLookup.keysIterator.filter(_ startsWith word).to[Vector]
       }
-      completer.completionsList.cellFactory = _ => new ListCell[String] {
-        this.getStyleClass add "emoji-autocompletion-cell"
-        val emoji = new Pane()
-        emoji.styleClass add "emoji-autocompletion-cell-image"
-        setMaxWidth(Double.MaxValue)
-        override def updateItem(item: String, empty: Boolean): Unit = {
-          super.updateItem(item, empty)
-          if (!empty && item != null) {
-            setText(item)
-            emoji.background = imageBackground(emojiProvider(item))
-            setGraphic(emoji)
-          } else {
-            setText(null)
-            setGraphic(null)
+      completer.completionsList setCellFactory {_ => new ListCell[String] {
+          this.getStyleClass add "emoji-autocompletion-cell"
+          val emoji = new Pane()
+          emoji.getStyleClass add "emoji-autocompletion-cell-image"
+          setMaxWidth(Double.MaxValue)
+          override def updateItem(item: String, empty: Boolean): Unit = {
+            super.updateItem(item, empty)
+            if (!empty && item != null) {
+              setText(item)
+              emoji setBackground imageBackground(emojiProvider(item))
+              setGraphic(emoji)
+            } else {
+              setText(null)
+              setGraphic(null)
+            }
           }
-        }
-      }
+        }}
       
 
       val popup = new Popup
-      popup.autoHide = true
+      popup setAutoHide true
       val emojiPicker = new EmojiPicker(emojiProvider)
-      popup.content.add(emojiPicker)
+      popup.getContent.add(emojiPicker)
       val emojiPickerButton = nodeRoot.lookup(".emoji-picker-button").asInstanceOf[Button]
-      emojiPickerButton.onAction = _ => {
-        popup.setAnchorLocation(PopupWindow.AnchorLocation.CONTENT_BOTTOM_LEFT)
-        val pos = emojiPickerButton.localToScreen(0, 0)
-        popup.show(emojiPickerButton, pos.getX, pos.getY)
-      }
+      emojiPickerButton setOnAction { _ => {
+          popup.setAnchorLocation(PopupWindow.AnchorLocation.CONTENT_BOTTOM_LEFT)
+          val pos = emojiPickerButton.localToScreen(0, 0)
+          popup.show(emojiPickerButton, pos.getX, pos.getY)
+        }}
       
       emojiPicker.onIconPicked = evt => {
         textArea.appendText(evt.emoji + " ")

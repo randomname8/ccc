@@ -20,18 +20,18 @@ class VlcMediaPlayer extends MediaPlayer {
     }
     override def error(player) = Platform.runLater { () =>
       VlcMediaPlayer.this.playing.set(false)
-      errorLabel.visible = true
+      errorLabel setVisible true
     }
     override def lengthChanged(player, length) = Platform.runLater { () =>
       totalDuration set length
     }
     override def buffering(player, newCache) = Platform.runLater { () =>
-      bufferingStatus.visible = newCache != 100
+      bufferingStatus setVisible newCache != 100
     }
     override def playing(player) = Platform.runLater { () =>
-      errorLabel.visible = false
-      bufferingStatus.visible = false
-      thumbnailImageView.visible = false
+      errorLabel setVisible false
+      bufferingStatus setVisible false
+      thumbnailImageView setVisible false
       VlcMediaPlayer.this.playing.set(true)
     }
     override def paused(player) = Platform.runLater { () =>
@@ -54,14 +54,14 @@ class VlcMediaPlayer extends MediaPlayer {
   val mediaPlayer = mediaPlayerComponent.getMediaPlayer.asInstanceOf[DefaultDirectMediaPlayer]
   
   private val contentStackPane = new StackPane()
-  private val thumbnailImageView = new ImageView().modify(_.setPreserveRatio(true), _.setSmooth(true), _.visible = false,
+  private val thumbnailImageView = new ImageView().modify(_.setPreserveRatio(true), _.setSmooth(true), _ setVisible false,
                                                           _.fitWidthProperty bind contentStackPane.widthProperty,
                                                           _.fitHeightProperty bind contentStackPane.heightProperty)
-  private val bufferingStatus = new ProgressIndicator(ProgressIndicator.INDETERMINATE_PROGRESS).modify(_.visible = false)
-  private val errorLabel = new Label("An error occurred").modify(_.visible = false)
+  private val bufferingStatus = new ProgressIndicator(ProgressIndicator.INDETERMINATE_PROGRESS).modify(_ setVisible false)
+  private val errorLabel = new Label("An error occurred").modify(_ setVisible false)
   private val textureNode = new TextureNode(new VlcTexture(mediaPlayer), 60)
   playing foreach (b => if (b) textureNode.renderer.start() else textureNode.renderer.stop())
-  contentStackPane.children.addAll(thumbnailImageView, textureNode, bufferingStatus, errorLabel)
+  contentStackPane.getChildren.addAll(thumbnailImageView, textureNode, bufferingStatus, errorLabel)
   content set contentStackPane
   
   volume.foreach { v => mediaPlayer setVolume (v.floatValue * 2).toInt }
@@ -79,7 +79,7 @@ class VlcMediaPlayer extends MediaPlayer {
     mediaPlayer.prepareMedia(mediaUrl, "--live-caching")
     thumbnailImage foreach { img =>
       thumbnailImageView.setImage(img)
-      thumbnailImageView.visible = true
+      thumbnailImageView setVisible true
     }
   }
   
