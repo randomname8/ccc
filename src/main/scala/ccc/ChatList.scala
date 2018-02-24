@@ -31,6 +31,7 @@ class ChatList[User, Message](val markdownNodeFactory: MarkdownRenderer.NodeFact
   
   val additionalMessageControlsFactory = new SimpleObjectProperty[Message => Seq[Node]](this, "additionalMessageControlsFactory", _ => Seq.empty)
   val additionalMessageRenderFactory = new SimpleObjectProperty[(Message, ObservableValue[_ <: Number]) => Seq[Node]](this, "additionalMessageRenderFactory", (_, _) => Seq.empty)
+  val messageFormatter = new SimpleObjectProperty[String => String](this, "messageFormatter", identity)
   getSelectionModel setSelectionMode SelectionMode.MULTIPLE
   
   setCellFactory(_ => new ChatBoxListCell())
@@ -62,7 +63,7 @@ class ChatList[User, Message](val markdownNodeFactory: MarkdownRenderer.NodeFact
     private[this] val maxWidth: ObservableValue[_ <: Number] = Bindings.subtract(ChatList.this.widthProperty, avatarPane.widthProperty).map(_.doubleValue - 100)
     val renderMessage = (MarkdownRenderer.render(_: String, emojiProvider, markdownNodeFactory)(
         MarkdownRenderer.RenderContext(() => {val r = webViewCache.get; localWebView :+= r; r},
-                                       () => {val r = new util.VlcMediaPlayer; localMediaPlayers :+= r; r}))) compose messageContent
+                                       () => {val r = new util.VlcMediaPlayer; localMediaPlayers :+= r; r}))) compose messageContent.andThen(messageFormatter.get())
     override protected def updateItem(item: ChatBox[User, Message], empty: Boolean): Unit = {
       super.updateItem(item, empty)
       if (item == lastItem) return;
