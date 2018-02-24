@@ -47,7 +47,7 @@ class ChatTextInput(val markdownNodeFactory: MarkdownRenderer.NodeFactory,
       textArea.textProperty foreach { s =>
         val nodes = if (s == null || s.isEmpty) Seq.empty
         else {
-          MarkdownRenderer.render(s.replace("\n", "\n\n"), emojiProvider, markdownNodeFactory)(
+          MarkdownRenderer.render(s.replace("\n", "\\\n"), emojiProvider, markdownNodeFactory)(
             MarkdownRenderer.RenderContext(webViewCache.get _, () => {
                 val res = new util.VlcMediaPlayer
                 instantiatedPlayers +:= res

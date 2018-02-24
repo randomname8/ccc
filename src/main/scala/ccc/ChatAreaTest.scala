@@ -88,7 +88,7 @@ for i in {0..7}; do sudo cpufreq-set -g performance -u 2GHz -c $i; done;
         evt.consume()
         val msg = chatTextInput.textArea.getText
         chatTextInput.textArea.clear()
-        chatList.addEntry("(⊙.⊙)☂", totoro, msg.trim.replace("\n", "\n\n"))
+        chatList.addEntry("(⊙.⊙)☂", totoro, msg.trim.replace("\n", "\\\n"))
       }
     }
   }

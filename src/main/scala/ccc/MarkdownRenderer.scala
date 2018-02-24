@@ -5,9 +5,6 @@ import javafx.scene.Node
 import javafx.scene.image.Image
 import javafx.scene.text._
 import javafx.scene.web.WebView
-import org.commonmark.node.BulletList
-import org.commonmark.node.ListItem
-import org.commonmark.node.OrderedList
 import org.commonmark.{node => md, ext => mdext}
 import scala.collection.JavaConverters._
 
@@ -65,6 +62,7 @@ object MarkdownRenderer {
           }
           if (lastIdx != text.length) texts add new Text(text.substring(lastIdx))
         }
+        override def visit(e: md.HardLineBreak) = texts add new Text("\n")
         override def visit(e: md.Emphasis) = modifyGeneratedTexts(e)(t => if (t.getFont == strongEmphasisFont) t.setFont(strongerEmphasisFont) else t.setFont(emphasisFont))
         override def visit(e: md.StrongEmphasis) = modifyGeneratedTexts(e)(t => if (t.getFont == emphasisFont) t.setFont(strongerEmphasisFont) else t.setFont(strongEmphasisFont))
         override def visit(e: md.Image) = texts add nodeFactory.mkInlineContent(context)(e.getTitle, e.getDestination)
@@ -83,15 +81,15 @@ object MarkdownRenderer {
         }
         
         var currentOrderedListNumber: Int = _
-        override def visit(e: OrderedList) = {
+        override def visit(e: md.OrderedList) = {
           currentOrderedListNumber = e.getStartNumber
           visitChildren(e)
         }
-        override def visit(e: ListItem) = {
+        override def visit(e: md.ListItem) = {
           val currElem = texts.size
           visitChildren(e)
           val toInsert = e.getParent match {
-            case _: OrderedList => 
+            case _: md.OrderedList => 
               val res = f"$currentOrderedListNumber% 3d. "
               currentOrderedListNumber += 1
               res
