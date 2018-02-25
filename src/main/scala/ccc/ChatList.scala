@@ -48,6 +48,13 @@ class ChatList[User, Message](val markdownNodeFactory: MarkdownRenderer.NodeFact
       case _ => itemsScala += ChatBox(user, avatar, Vector(message))
     }
   }
+  def removeEntry(user: User, message: Message): Unit = {
+    itemsScala.iterator.find(_.messages contains message) foreach { box =>
+      val updated = box.copy(messages = box.messages.filterNot(message.==))
+      if (updated.messages.isEmpty) itemsScala -= updated
+      else itemsScala.update(itemsScala indexOf box, updated)
+    }
+  }
   
   private val messagesDateTimeFormat = DateTimeFormatter.ofLocalizedDateTime(FormatStyle.MEDIUM)
   private class ChatBoxListCell extends ListCell[ChatBox[User, Message]] {
