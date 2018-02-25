@@ -47,7 +47,7 @@ class ChatTextInput(val markdownNodeFactory: MarkdownRenderer.NodeFactory,
       textArea.textProperty foreach { s =>
         val nodes = if (s == null || s.isEmpty) Seq.empty
         else {
-          MarkdownRenderer.render(s.replace("\n", "\\\n"), emojiProvider, markdownNodeFactory)(
+          MarkdownRenderer.render(s.replace("\n", "\n\n"), emojiProvider, markdownNodeFactory)(
             MarkdownRenderer.RenderContext(webViewCache.get _, () => {
                 val res = new util.VlcMediaPlayer
                 instantiatedPlayers +:= res
@@ -97,6 +97,7 @@ class ChatTextInput(val markdownNodeFactory: MarkdownRenderer.NodeFactory,
       val emojiPicker = new EmojiPicker(emojiProvider)
       popup.getContent.add(emojiPicker)
       val emojiPickerButton = nodeRoot.lookup(".emoji-picker-button").asInstanceOf[Button]
+      emojiPickerButton.disableProperty bind textArea.disabledProperty
       emojiPickerButton setOnAction { _ => {
           popup.setAnchorLocation(PopupWindow.AnchorLocation.CONTENT_BOTTOM_LEFT)
           val pos = emojiPickerButton.localToScreen(0, 0)
