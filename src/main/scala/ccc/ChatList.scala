@@ -8,11 +8,14 @@ import javafx.beans.value.ObservableValue
 import javafx.collections.FXCollections
 import javafx.fxml.FXMLLoader
 import javafx.scene.Node
+import javafx.scene.Scene
 import javafx.scene.control._
 import javafx.scene.image.Image
-import javafx.scene.input.{Clipboard, ClipboardContent}
+import javafx.scene.image.ImageView
+import javafx.scene.input.{Clipboard, ClipboardContent, MouseButton}
 import javafx.scene.layout._
 import javafx.scene.web.WebView
+import javafx.stage.Stage
 import scala.collection.JavaConverters._
 
 object ChatList {
@@ -64,6 +67,25 @@ class ChatList[User, Message](val markdownNodeFactory: MarkdownRenderer.NodeFact
     val dateLabel = pane.lookup(".chat-date-label").asInstanceOf[Label].modify(_ setText "")
     val entriesVBox = pane.lookup(".entries-vbox").asInstanceOf[VBox]
     setGraphic(pane)
+    avatarPane.setOnMouseClicked { evt =>
+      if (evt.getButton == MouseButton.MIDDLE && getItem != null) {
+        val box = getItem
+        val image = box.avatar.get
+        val stage = new Stage()
+        
+        val container = new util.ResizableStackPane()
+        val imageView = new ImageView(image).modify(_.setPreserveRatio(true))
+        imageView.fitWidthProperty.bind(container.prefWidthProperty.map(v => if (v.doubleValue == -1) 500 else v))
+        imageView.fitHeightProperty.bind(container.prefHeightProperty.map(v => if (v.doubleValue == -1) 500 else v))
+        container.getChildren add imageView
+        
+        stage.setScene(new Scene(new ScrollPane(container)))
+        stage.setTitle(s"${userDisplayName(box.user)}'s avatar")
+        stage.initOwner(getScene.getWindow)
+        stage.sizeToScene()
+        stage.show()
+      }
+    }
     private[this] var lastItem: ChatBox[User, Message] = _
     private[this] var localWebView = Vector.empty[WebView] //track the webviews used by this item in order to give them back to the pool later
     private[this] var localMediaPlayers = Vector.empty[util.VlcMediaPlayer] //track the players used by this item in order to give them back to the pool later
