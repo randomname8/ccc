@@ -17,25 +17,25 @@ class DefaultMarkdownNodeFactory(
   val imagesCache: collection.Map[String, util.WeakImage]) extends MarkdownRenderer.NodeFactory {
   import DefaultMarkdownNodeFactory._
   
+  def desiredImageHeight = Font.getDefault.getSize * 1.8
   override def mkEmoji(context)(name, image): Node = {
-    val desiredImageHeight = Font.getDefault.getSize * 1.5
     val emojiImageView = new ImageView(image).modify(_.setPreserveRatio(true), _.setSmooth(true), _.setFitHeight(desiredImageHeight))
     val emojiLabel = new Label(null, emojiImageView)
     emojiLabel setTooltip new Tooltip(name)
     val expandAnimation = new Timeline(
       new KeyFrame(Duration.millis(0), new KeyValue(emojiImageView.fitHeightProperty(), desiredImageHeight: Number)),
-      new KeyFrame(Duration.millis(200), new KeyValue(emojiImageView.fitHeightProperty(), 128.0: Number)))
+      new KeyFrame(Duration.millis(200), new KeyValue(emojiImageView.fitHeightProperty(), 128.0.max(desiredImageHeight * 3): Number)))
     emojiLabel setOnMouseClicked {evt => if (evt.getButton == MouseButton.PRIMARY) {
-      expandAnimation.setRate(1)
-      expandAnimation.playFromStart()
-    }}
+        expandAnimation.setRate(1)
+        expandAnimation.playFromStart()
+      }}
     emojiLabel setOnMouseExited { evt => if (emojiImageView.getFitHeight != desiredImageHeight) {
-      expandAnimation.setRate(-1)
-      if (expandAnimation.getStatus == Animation.Status.STOPPED) {
-        expandAnimation.jumpTo(Duration.millis(200))
-        expandAnimation.play()
-      }
-    }}
+        expandAnimation.setRate(-1)
+        if (expandAnimation.getStatus == Animation.Status.STOPPED) {
+          expandAnimation.jumpTo(Duration.millis(200))
+          expandAnimation.play()
+        }
+      }}
     emojiLabel
   }
   
@@ -43,7 +43,7 @@ class DefaultMarkdownNodeFactory(
   //collapsed state
   private[this] val collapsedElementState = new util.LruMap[Any, Boolean](1000)
   
-  override def mkInlineContent(context)(title, url): Node = {
+  override def mkInlineContent(context)(title, url, altText): Node = {
     def content() = {
       val container = new util.ResizableStackPane()
       val content = if (url matches ".+(avi|flv|mkv|webm|mp4)") {
@@ -65,17 +65,18 @@ class DefaultMarkdownNodeFactory(
       _.setMaxWidth(javafx.scene.layout.Region.USE_PREF_SIZE),
       _ setExpanded collapsedElementState.get(url).getOrElse(true),
       _.expandedProperty.foreach(collapsedElementState(url) = _),
+      _.setTooltip(new Tooltip(altText)),
       self => self setOnMouseClicked { evt => evt.getButton match {
-        case MouseButton.SECONDARY =>
-          val stage = new Stage()
-          stage initOwner self.getScene.getWindow
-          stage setTitle title
-          stage setScene new Scene(new ScrollPane(content()))
-          stage.sizeToScene()
-          stage.show()
-        case MouseButton.MIDDLE => hostServices.showDocument(url)
-        case _ =>
-      }})
+          case MouseButton.SECONDARY =>
+            val stage = new Stage()
+            stage initOwner self.getScene.getWindow
+            stage setTitle title
+            stage setScene new Scene(new ScrollPane(content()))
+            stage.sizeToScene()
+            stage.show()
+          case MouseButton.MIDDLE => hostServices.showDocument(url)
+          case _ =>
+        }})
   }
   
   def mkLink(context)(title, url): Node = new Text(title.getOrElse(url)).modify(
