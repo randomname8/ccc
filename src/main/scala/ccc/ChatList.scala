@@ -31,7 +31,7 @@ class ChatList[User, Message](val markdownNodeFactory: MarkdownRenderer.NodeFact
   
   val additionalMessageControlsFactory = new SimpleObjectProperty[Message => Seq[Node]](this, "additionalMessageControlsFactory", _ => Seq.empty)
   val additionalMessageRenderFactory = new SimpleObjectProperty[(Message, ObservableValue[_ <: Number]) => Seq[Node]](this, "additionalMessageRenderFactory", (_, _) => Seq.empty)
-  val messageFormatter = new SimpleObjectProperty[String => String](this, "messageFormatter", identity)
+  val messageFormatter = new SimpleObjectProperty[Message => String](this, "messageFormatter")
   getSelectionModel setSelectionMode SelectionMode.MULTIPLE
   
   setCellFactory(_ => new ChatBoxListCell())
@@ -68,9 +68,13 @@ class ChatList[User, Message](val markdownNodeFactory: MarkdownRenderer.NodeFact
     private[this] var localWebView = Vector.empty[WebView] //track the webviews used by this item in order to give them back to the pool later
     private[this] var localMediaPlayers = Vector.empty[util.VlcMediaPlayer] //track the players used by this item in order to give them back to the pool later
     private[this] val maxWidth: ObservableValue[_ <: Number] = Bindings.subtract(ChatList.this.widthProperty, avatarPane.widthProperty).map(_.doubleValue - 100)
-    val renderMessage = (MarkdownRenderer.render(_: String, emojiProvider, markdownNodeFactory)(
-        MarkdownRenderer.RenderContext(() => {val r = webViewCache.get; localWebView :+= r; r},
-                                       () => {val r = new util.VlcMediaPlayer; localMediaPlayers :+= r; r}))) compose messageContent.andThen(messageFormatter.get())
+    val renderMessage = {
+      val renderPartial = (MarkdownRenderer.render(_: String, emojiProvider, markdownNodeFactory)(
+          MarkdownRenderer.RenderContext(() => {val r = webViewCache.get; localWebView :+= r; r},
+                                         () => {val r = new util.VlcMediaPlayer; localMediaPlayers :+= r; r})))
+      if (messageFormatter.get != null) renderPartial compose messageFormatter.get()
+      else renderPartial compose messageContent
+    }
     override protected def updateItem(item: ChatBox[User, Message], empty: Boolean): Unit = {
       super.updateItem(item, empty)
       if (item == lastItem) return;
