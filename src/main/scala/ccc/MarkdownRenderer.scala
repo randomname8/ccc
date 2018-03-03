@@ -65,7 +65,10 @@ object MarkdownRenderer {
         override def visit(e: md.HardLineBreak) = texts add new Text("\n")
         override def visit(e: md.Emphasis) = modifyGeneratedTexts(e)(t => if (t.getFont == strongEmphasisFont) t.setFont(strongerEmphasisFont) else t.setFont(emphasisFont))
         override def visit(e: md.StrongEmphasis) = modifyGeneratedTexts(e)(t => if (t.getFont == emphasisFont) t.setFont(strongerEmphasisFont) else t.setFont(strongEmphasisFont))
-        override def visit(e: md.Image) = texts add nodeFactory.mkInlineContent(context)(e.getTitle, e.getDestination)
+        override def visit(e: md.Image) = texts add nodeFactory.mkInlineContent(context)(e.getTitle, e.getDestination, e.getFirstChild match {
+            case t: md.Text if t != null => t.getLiteral
+            case _ => ""
+          })
         override def visit(e: md.Link) = texts add nodeFactory.mkLink(context)(Option(e.getTitle), e.getDestination)
         override def visit(e: md.CustomNode) = {
           e match {
@@ -121,7 +124,7 @@ object MarkdownRenderer {
   case class RenderContext(webViewProvider: () => WebView, mediaPlayerProvider: () => util.VlcMediaPlayer)
   trait NodeFactory {
     def mkEmoji(context: RenderContext)(name: String, image: Image): Node
-    def mkInlineContent(context: RenderContext)(title: String, url: String): Node
+    def mkInlineContent(context: RenderContext)(title: String, url: String, altText: String): Node
     def mkLink(context: RenderContext)(title: Option[String], url: String): Node
     def mkCodeLine(context: RenderContext)(code: String): Node
     def mkCodeBlock(context: RenderContext)(lang: Option[String], code: String): Node
