@@ -14,7 +14,7 @@
             <Insets right="25.0" />
          </HBox.margin>
       </StackPane>
-      <BorderPane maxWidth="1.7976931348623157E308" styleClass="rofl" HBox.hgrow="ALWAYS">
+      <BorderPane maxWidth="1.7976931348623157E308" HBox.hgrow="ALWAYS">
          <top>
             <HBox alignment="BASELINE_LEFT" fillHeight="false" maxWidth="1.7976931348623157E308" spacing="20.0" style="-fx-padding: 0 0 0.5em 0;" BorderPane.alignment="CENTER">
                <children>
