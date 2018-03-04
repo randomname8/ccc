@@ -84,8 +84,8 @@ class VlcMediaPlayer extends MediaPlayer {
   }
   
   def dispose(): Unit = {
-    mediaPlayerComponent.release()
     mediaPlayer.stop()
     mediaPlayer.release()
+    mediaPlayerComponent.release()
   }
 }
