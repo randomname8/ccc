@@ -39,7 +39,7 @@ class ChatAreaTest extends BaseApplication {
     })
   
   val markdownRenderer = new DefaultMarkdownNodeFactory(getHostServices, imagesCache)
-  val chatList = new ChatList[String, String](markdownRenderer, webViewCache, emojis.mapValues(_.get), identity, identity, _ => LocalDateTime.now())
+  val chatList = new ChatList[String, String](getHostServices, markdownRenderer, webViewCache, emojis.mapValues(_.get), identity, identity, _ => LocalDateTime.now())
   val chatTextInput = new ChatTextInput(markdownRenderer, webViewCache, emojis.mapValues(_.get))
   val sceneRoot = new BorderPane {
     this center new ScrollPane(chatList).modify(_ setFitToWidth true, _ setFitToHeight true)
