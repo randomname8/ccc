@@ -44,34 +44,30 @@ class DefaultMarkdownNodeFactory(
   private[this] val collapsedElementState = new util.LruMap[Any, Boolean](1000)
   
   override def mkInlineContent(context)(title, url, altText): Node = {
-    def content() = {
+    def content(fitWidth: Double, fitHeight: Double) = {
       val container = new util.ResizableStackPane()
       val content = if (url matches ".+(avi|flv|mkv|webm|mp4)") {
-        val mediaPlayer = new util.VlcMediaPlayer()
+        val mediaPlayer = context.mediaPlayerProvider()
         mediaPlayer.setMedia(url, None)
         mediaPlayer
       } else {
         val image = imagesCache(url).get
-        val imageView = new ImageView(image).modify(_.setFitHeight(500), _.setFitWidth(500), _.setPreserveRatio(true))
-        imageView.fitWidthProperty.bind(container.prefWidthProperty.map(v => if (v.doubleValue == -1) 500 else v))
-        imageView.fitHeightProperty.bind(container.prefHeightProperty.map(v => if (v.doubleValue == -1) 500 else v))
+        val imageView = new ImageView(image).modify(_.setFitHeight(fitWidth), _.setFitWidth(fitHeight), _.setPreserveRatio(true))
+        imageView.fitWidthProperty.bind(container.prefWidthProperty.map(v => if (v.doubleValue == -1) fitWidth else v))
+        imageView.fitHeightProperty.bind(container.prefHeightProperty.map(v => if (v.doubleValue == -1) fitHeight else v))
         imageView
       }
       container.getChildren.add(content)
       container
     }
-    new TitledPane(title, content()).modify(
-      _.getStyleClass.add("collapsible-image"),
-      _.setMaxWidth(javafx.scene.layout.Region.USE_PREF_SIZE),
-      _ setExpanded collapsedElementState.get(url).getOrElse(true),
-      _.expandedProperty.foreach(collapsedElementState(url) = _),
+    new CollapsibleContent(title, content(500, 500), url).modify(
       _.setTooltip(new Tooltip(altText)),
       self => self setOnMouseClicked { evt => evt.getButton match {
           case MouseButton.SECONDARY =>
             val stage = new Stage()
             stage initOwner self.getScene.getWindow
             stage setTitle title
-            stage setScene new Scene(new ScrollPane(content()))
+            stage setScene new Scene(new ScrollPane(content(0, 0)))
             stage.sizeToScene()
             stage.show()
           case MouseButton.MIDDLE => hostServices.showDocument(url)
@@ -111,6 +107,13 @@ class DefaultMarkdownNodeFactory(
     }
     webView.getEngine.loadContent(html)
     webView
+  }
+  
+  class CollapsibleContent(title: String, content: Node, url: String) extends TitledPane(title, content) {
+    getStyleClass.add("collapsible-content")
+    setMaxWidth(javafx.scene.layout.Region.USE_PREF_SIZE)
+    this setExpanded collapsedElementState.get(url).getOrElse(true)
+    expandedProperty.foreach(collapsedElementState(url) = _)
   }
 }
 
