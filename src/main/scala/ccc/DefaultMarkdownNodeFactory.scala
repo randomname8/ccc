@@ -3,6 +3,7 @@ package ccc
 import better.files._
 import javafx.animation.{Animation, KeyFrame, KeyValue, Timeline}
 import javafx.application.HostServices
+import javafx.scene.web.WebView
 import javafx.scene.{Node, Scene}
 import javafx.scene.control.{Label, Tooltip, TitledPane, ScrollPane}
 import javafx.scene.image.{ImageView}
@@ -83,7 +84,9 @@ class DefaultMarkdownNodeFactory(
   
   def mkCodeBlock(context)(language: Option[String], code: String): Node = {
     //check if we have some webview available, otherwise create one
-    val webView = context.webViewProvider()
+      val webView = new WebView()
+      webView setContextMenuEnabled false
+      webView.getStyleClass add "code-block"
     val langClass = language.getOrElse("").replace("\"", "&quot;")
     val content = code.replace("<", "&lt;").replace(">", "&gt;")
     val html = s"""

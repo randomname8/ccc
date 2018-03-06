@@ -6,7 +6,6 @@ import javafx.scene.control.ScrollPane
 import javafx.scene.input.KeyCode
 import javafx.scene.layout.BorderPane
 import javafx.scene.text.Font
-import javafx.scene.web.WebView
 import javafx.stage.Stage
 
 object ChatAreaTest extends App {
@@ -28,19 +27,10 @@ class ChatAreaTest extends BaseApplication {
     imagesCache(k) = res
     res
   }
-  /**
-   * cache some viewpanes, though only weakly, if they get claimed that's alright
-   */
-  private[this] val webViewCache = new util.WeakObjectPool[WebView](() => {
-      val res = new WebView()
-      res setContextMenuEnabled false
-      res.getStyleClass add "code-block"
-      res
-    })
   
   val markdownRenderer = new DefaultMarkdownNodeFactory(getHostServices, imagesCache)
-  val chatList = new ChatList[String, String](getHostServices, markdownRenderer, webViewCache, emojis.mapValues(_.get), identity, identity, _ => LocalDateTime.now())
-  val chatTextInput = new ChatTextInput(markdownRenderer, webViewCache, emojis.mapValues(_.get))
+  val chatList = new ChatList[String, String](getHostServices, markdownRenderer, emojis.mapValues(_.get), identity, identity, _ => LocalDateTime.now())
+  val chatTextInput = new ChatTextInput(markdownRenderer, emojis.mapValues(_.get))
   val sceneRoot = new BorderPane {
     this center new ScrollPane(chatList).modify(_ setFitToWidth true, _ setFitToHeight true)
     this bottom chatTextInput

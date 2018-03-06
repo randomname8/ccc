@@ -9,7 +9,6 @@ import javafx.stage.Popup
 import javafx.stage.PopupWindow
 
 class ChatTextInput(val markdownNodeFactory: MarkdownRenderer.NodeFactory,
-                    val webViewCache: util.WeakObjectPool[WebView],
                     val emojiProvider: Map[String, Image]) extends Control {
 
   private[this] val nodeRoot = FXMLLoader.load[Pane](getClass.getResource("/chat-text-input.fxml"))
@@ -48,14 +47,13 @@ class ChatTextInput(val markdownNodeFactory: MarkdownRenderer.NodeFactory,
         val nodes = if (s == null || s.isEmpty) Seq.empty
         else {
           MarkdownRenderer.render(s.replace("\n", "\n\n"), emojiProvider, markdownNodeFactory)(
-            MarkdownRenderer.RenderContext(webViewCache.get _, () => {
+            MarkdownRenderer.RenderContext(() => {
                 val res = new util.VlcMediaPlayer
                 instantiatedPlayers +:= res
                 res
               }))
         }
         
-        visual.getChildren.forEach { case v: WebView => webViewCache.takeBack(v); case _ => }
         instantiatedPlayers foreach (_.dispose())
         instantiatedPlayers = Vector.empty
         

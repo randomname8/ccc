@@ -22,7 +22,6 @@ object ChatList {
 import ChatList._
 class ChatList[User, Message](val hostServices: HostServices,
                               val markdownNodeFactory: MarkdownRenderer.NodeFactory,
-                              val webViewCache: util.WeakObjectPool[WebView],
                               val emojiProvider: Map[String, Image],
                               val userDisplayName: User => String,
                               val messageContent: Message => String,
@@ -70,11 +69,10 @@ class ChatList[User, Message](val hostServices: HostServices,
     val entriesVBox = pane.lookup(".entries-vbox").asInstanceOf[VBox]
     setGraphic(pane)
     private[this] var lastItem: ChatBox[User, Message] = _
-    private[this] var localWebView = Vector.empty[WebView] //track the webviews used by this item in order to give them back to the pool later
+//    private[this] var localWebView = Vector.empty[WebView] //track the webviews used by this item in order to give them back to the pool later
     private[this] var localMediaPlayers = Vector.empty[util.VlcMediaPlayer] //track the players used by this item in order to give them back to the pool later
     private[this] val maxWidth: ObservableValue[_ <: Number] = Bindings.subtract(ChatList.this.widthProperty, avatarPane.widthProperty).map(_.doubleValue - 100)
-    private[this] val renderContext = MarkdownRenderer.RenderContext(() => {val r = webViewCache.get; localWebView :+= r; r},
-                                                                     () => {val r = new util.VlcMediaPlayer; localMediaPlayers :+= r; r})
+    private[this] val renderContext = MarkdownRenderer.RenderContext(() => {val r = new util.VlcMediaPlayer; localMediaPlayers :+= r; r})
     val renderMessage = {
       val renderPartial = (MarkdownRenderer.render(_: String, emojiProvider, markdownNodeFactory)(renderContext))
       if (messageFormatter.get != null) renderPartial compose messageFormatter.get()
@@ -84,9 +82,6 @@ class ChatList[User, Message](val hostServices: HostServices,
       super.updateItem(item, empty)
       if (item == lastItem) return;
       lastItem = item
-      //discard our stored local web views by returning them to the cache
-      localWebView foreach webViewCache.takeBack
-      localWebView = Vector.empty
       localMediaPlayers foreach (_.dispose())
       localMediaPlayers = Vector.empty
       

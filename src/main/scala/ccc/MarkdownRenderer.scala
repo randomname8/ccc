@@ -4,7 +4,6 @@ import better.files._
 import javafx.scene.Node
 import javafx.scene.image.Image
 import javafx.scene.text._
-import javafx.scene.web.WebView
 import org.commonmark.{node => md, ext => mdext}
 import scala.collection.JavaConverters._
 
@@ -121,7 +120,7 @@ object MarkdownRenderer {
     res
   }
   
-  case class RenderContext(webViewProvider: () => WebView, mediaPlayerProvider: () => util.VlcMediaPlayer)
+  case class RenderContext(mediaPlayerProvider: () => util.VlcMediaPlayer)
   trait NodeFactory {
     def mkEmoji(context: RenderContext)(name: String, image: Image): Node
     def mkInlineContent(context: RenderContext)(title: String, url: String, altText: String): Node
