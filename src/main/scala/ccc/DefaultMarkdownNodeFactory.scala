@@ -6,7 +6,7 @@ import javafx.application.HostServices
 import javafx.scene.web.WebView
 import javafx.scene.{Node, Scene}
 import javafx.scene.control.{Label, Tooltip, TitledPane, ScrollPane}
-import javafx.scene.image.{ImageView}
+import javafx.scene.image.{ImageView, Image}
 import javafx.scene.input.MouseButton
 import javafx.scene.text.{Font, Text}
 import javafx.stage.Stage
@@ -19,7 +19,7 @@ class DefaultMarkdownNodeFactory(
   import DefaultMarkdownNodeFactory._
   
   def desiredImageHeight = Font.getDefault.getSize * 1.8
-  override def mkEmoji(context)(name, image): Node = {
+  override def mkEmoji(context: MarkdownRenderer.RenderContext)(name: String, image: Image): Node = {
     val emojiImageView = new ImageView(image).modify(_.setPreserveRatio(true), _.setSmooth(true), _.setFitHeight(desiredImageHeight))
     val emojiLabel = new Label(null, emojiImageView)
     emojiLabel setTooltip new Tooltip(name)
@@ -44,7 +44,7 @@ class DefaultMarkdownNodeFactory(
   //collapsed state
   private[this] val collapsedElementState = new util.LruMap[Any, Boolean](1000)
   
-  override def mkInlineContent(context)(title, url, altText): Node = {
+  override def mkInlineContent(context: MarkdownRenderer.RenderContext)(title: String, url: String, altText: String): Node = {
     def content(fitWidth: Double, fitHeight: Double) = {
       val container = new util.ResizableStackPane()
       val content = if (url matches ".+(avi|flv|mkv|webm|mp4)") {
@@ -76,13 +76,13 @@ class DefaultMarkdownNodeFactory(
         }})
   }
   
-  def mkLink(context)(title, url): Node = new Text(title.getOrElse(url)).modify(
+  def mkLink(context: MarkdownRenderer.RenderContext)(title: Option[String], url: String): Node = new Text(title.getOrElse(url)).modify(
     _.getStyleClass.add("md-link"),
     _ setOnMouseClicked { evt => if (evt.getButton == MouseButton.PRIMARY) hostServices.showDocument(url) })
 
-  def mkCodeLine(context)(code): Node = new Label(code).modify(_.setFont(monoscriptFont), _.setStyle("-fx-background-color: lightgray;"))
+  def mkCodeLine(context: MarkdownRenderer.RenderContext)(code: String): Node = new Label(code).modify(_.setFont(monoscriptFont), _.setStyle("-fx-background-color: lightgray;"))
   
-  def mkCodeBlock(context)(language: Option[String], code: String): Node = {
+  def mkCodeBlock(context: MarkdownRenderer.RenderContext)(language: Option[String], code: String): Node = {
     //check if we have some webview available, otherwise create one
       val webView = new WebView()
       webView setContextMenuEnabled false
