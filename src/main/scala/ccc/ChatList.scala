@@ -33,6 +33,7 @@ class ChatList[User, Message](val hostServices: HostServices,
   val additionalMessageControlsFactory = new SimpleObjectProperty[Message => Seq[Node]](this, "additionalMessageControlsFactory", _ => Seq.empty)
   val additionalMessageRenderFactory = new SimpleObjectProperty[(Message, MarkdownRenderer.RenderContext) => Seq[Node]](this, "additionalMessageRenderFactory", (_, _) => Seq.empty)
   val messageFormatter = new SimpleObjectProperty[Message => String](this, "messageFormatter")
+  val userNameNodeFactory = new SimpleObjectProperty[User => Node](this, "userNameNodeFactory")
   getSelectionModel setSelectionMode SelectionMode.MULTIPLE
   
   setCellFactory(_ => new ChatBoxListCell())
@@ -69,7 +70,6 @@ class ChatList[User, Message](val hostServices: HostServices,
     val entriesVBox = pane.lookup(".entries-vbox").asInstanceOf[VBox]
     setGraphic(pane)
     private[this] var lastItem: ChatBox[User, Message] = _
-//    private[this] var localWebView = Vector.empty[WebView] //track the webviews used by this item in order to give them back to the pool later
     private[this] var localMediaPlayers = Vector.empty[util.VlcMediaPlayer] //track the players used by this item in order to give them back to the pool later
     private[this] val maxWidth: ObservableValue[_ <: Number] = Bindings.subtract(ChatList.this.widthProperty, avatarPane.widthProperty).map(_.doubleValue - 100)
     private[this] val renderContext = MarkdownRenderer.RenderContext(() => {val r = new util.VlcMediaPlayer; localMediaPlayers :+= r; r})
@@ -87,7 +87,9 @@ class ChatList[User, Message](val hostServices: HostServices,
       
       if (!empty && item.messages.nonEmpty) {
         avatarPane setBackground imageBackground(item.avatar.get)
-        userLabel setText userDisplayName(item.user)
+        Option(userNameNodeFactory.get).fold(userLabel setText userDisplayName(item.user))(nodeFactory =>
+          userLabel setGraphic nodeFactory(item.user))
+        
         val date = messageDate(item.messages.head)
         dateLabel setText date.format(messagesDateTimeFormat)
         entriesVBox.getChildren.clear()
@@ -97,6 +99,7 @@ class ChatList[User, Message](val hostServices: HostServices,
       } else {
         avatarPane setBackground null
         userLabel setText null
+        userLabel setGraphic null
         dateLabel setText null
         entriesVBox.getChildren.clear()
       }
