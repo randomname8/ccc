@@ -10,9 +10,9 @@ import javafx.collections.FXCollections
 import javafx.fxml.FXMLLoader
 import javafx.scene.Node
 import javafx.scene.control._
-import javafx.scene.image.Image
 import javafx.scene.input.{Clipboard, ClipboardContent, MouseButton}
 import javafx.scene.layout._
+import javafx.scene.text.{Text, TextFlow}
 import javafx.scene.web.WebView
 import scala.collection.JavaConverters._
 
@@ -21,8 +21,6 @@ object ChatList {
 }
 import ChatList._
 class ChatList[User, Message](val hostServices: HostServices,
-                              val markdownNodeFactory: MarkdownRenderer.NodeFactory,
-                              val emojiProvider: Map[String, Image],
                               val userDisplayName: User => String,
                               val messageContent: Message => String,
                               val messageDate: Message => LocalDateTime) extends ListView[ChatBox[User, Message]] {
@@ -30,10 +28,12 @@ class ChatList[User, Message](val hostServices: HostServices,
   setItems(FXCollections.observableList(new java.util.LinkedList()))
   val itemsScala = getItems.asScala
   
-  val additionalMessageControlsFactory = new SimpleObjectProperty[Message => Seq[Node]](this, "additionalMessageControlsFactory", _ => Seq.empty)
-  val additionalMessageRenderFactory = new SimpleObjectProperty[(Message, MarkdownRenderer.RenderContext) => Seq[Node]](this, "additionalMessageRenderFactory", (_, _) => Seq.empty)
-  val messageFormatter = new SimpleObjectProperty[Message => String](this, "messageFormatter")
+  val messageControlsFactory = new SimpleObjectProperty[Message => Seq[Node]](this, "additionalMessageControlsFactory", _ => Seq.empty)
+  val messageRenderFactory = new SimpleObjectProperty[(Message, () => util.VlcMediaPlayer) => Seq[Node]](this, "additionalMessageRenderFactory", (msg, _) => 
+    Seq(new TextFlow(new Text(messageContent(msg)))))
   val userNameNodeFactory = new SimpleObjectProperty[User => Node](this, "userNameNodeFactory")
+  val userPictureCustomizer = new SimpleObjectProperty[(User, util.WeakImage, Region) => Unit](this, "userPictureCustomizer", (_, avatar, pane) =>
+    pane setBackground imageBackground(avatar.get))
   getSelectionModel setSelectionMode SelectionMode.MULTIPLE
   
   setCellFactory(_ => new ChatBoxListCell())
@@ -72,12 +72,12 @@ class ChatList[User, Message](val hostServices: HostServices,
     private[this] var lastItem: ChatBox[User, Message] = _
     private[this] var localMediaPlayers = Vector.empty[util.VlcMediaPlayer] //track the players used by this item in order to give them back to the pool later
     private[this] val maxWidth: ObservableValue[_ <: Number] = Bindings.subtract(ChatList.this.widthProperty, avatarPane.widthProperty).map(_.doubleValue - 100)
-    private[this] val renderContext = MarkdownRenderer.RenderContext(() => {val r = new util.VlcMediaPlayer; localMediaPlayers :+= r; r})
-    val renderMessage = {
-      val renderPartial = (MarkdownRenderer.render(_: String, emojiProvider, markdownNodeFactory)(renderContext))
-      if (messageFormatter.get != null) renderPartial compose messageFormatter.get()
-      else renderPartial compose messageContent
-    }
+    private[this] val renderContext: () => util.VlcMediaPlayer = () => {val r = new util.VlcMediaPlayer; localMediaPlayers :+= r; r}
+//    val renderMessage = {
+//      val renderPartial = (MarkdownRenderer.render(_: String, emojiProvider, markdownNodeFactory)(renderContext))
+//      if (messageFormatter.get != null) renderPartial compose messageFormatter.get()
+//      else renderPartial compose messageContent
+//    }
     override protected def updateItem(item: ChatBox[User, Message], empty: Boolean): Unit = {
       super.updateItem(item, empty)
       if (item == lastItem) return;
@@ -86,7 +86,7 @@ class ChatList[User, Message](val hostServices: HostServices,
       localMediaPlayers = Vector.empty
       
       if (!empty && item.messages.nonEmpty) {
-        avatarPane setBackground imageBackground(item.avatar.get)
+        userPictureCustomizer.get.apply(item.user, item.avatar, avatarPane)
         Option(userNameNodeFactory.get).fold(userLabel setText userDisplayName(item.user))(nodeFactory =>
           userLabel setGraphic nodeFactory(item.user))
         
@@ -108,7 +108,9 @@ class ChatList[User, Message](val hostServices: HostServices,
     def messageBox(msg: Message): Pane = {
       val chatMessagePane = FXMLLoader.load[Pane](getClass.getResource("/chat-message.fxml"))
       val messageContainer = chatMessagePane.lookup(".chat-message").asInstanceOf[Pane]
-      val renderedMarkdown = renderMessage(msg) ++ additionalMessageRenderFactory.get()(msg, renderContext)
+      val renderedMarkdown = 
+        try messageRenderFactory.get()(msg, renderContext)
+        catch { case ex@(_:ExceptionInInitializerError | _:NoClassDefFoundError)  => Seq(new javafx.scene.text.Text("Failed rendering message: " + ex).modify(_.setFill(javafx.scene.paint.Color.RED))) }
       renderedMarkdown foreach { n =>
         n match {
           case r: Region => r.maxWidthProperty bind maxWidth
@@ -121,7 +123,7 @@ class ChatList[User, Message](val hostServices: HostServices,
       val controlsPane = chatMessagePane.lookup(".chat-message-controls-pane").asInstanceOf[Pane]
       controlsPane.visibleProperty bind chatMessagePane.hoverProperty
       
-      Option(additionalMessageControlsFactory.get).foreach(_(msg) foreach controlsPane.getChildren.add)
+      Option(messageControlsFactory.get).foreach(_(msg) foreach controlsPane.getChildren.add)
       
       val ShowSourceMode = new Tooltip("Show source")
       val HideSourceMode = new Tooltip("Hide source")

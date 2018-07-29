@@ -28,9 +28,14 @@ class ChatAreaTest extends BaseApplication {
     res
   }
   
-  val markdownRenderer = new DefaultMarkdownNodeFactory(getHostServices, imagesCache)
-  val chatList = new ChatList[String, String](getHostServices, markdownRenderer, emojis.mapValues(_.get), identity, identity, _ => LocalDateTime.now())
-  val chatTextInput = new ChatTextInput(markdownRenderer, emojis.mapValues(_.get))
+  val mdRenderer = new MarkdownRenderer()
+  
+  val mdNodeFactory = new DefaultMarkdownNodeFactory(getHostServices, imagesCache)
+  val chatList = new ChatList[String, String](getHostServices, identity, identity, _ => LocalDateTime.now())
+  chatList.messageRenderFactory.set((msg, vlcFactory) => mdRenderer.render(msg, emojis.mapValues(_.get), mdNodeFactory)(MarkdownRenderer.RenderContext(vlcFactory)))
+  
+  
+  val chatTextInput = new ChatTextInput(mdRenderer, mdNodeFactory, emojis.mapValues(_.get))
   val sceneRoot = new BorderPane {
     this center new ScrollPane(chatList).modify(_ setFitToWidth true, _ setFitToHeight true)
     this bottom chatTextInput

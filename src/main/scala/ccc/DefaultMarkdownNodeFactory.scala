@@ -18,19 +18,19 @@ class DefaultMarkdownNodeFactory(
   val imagesCache: collection.Map[String, util.WeakImage]) extends MarkdownRenderer.NodeFactory {
   import DefaultMarkdownNodeFactory._
   
-  def desiredImageHeight = Font.getDefault.getSize * 1.8
+  def desiredEmojiHeight = Font.getDefault.getSize * 1.8
   override def mkEmoji(context: MarkdownRenderer.RenderContext)(name: String, image: Image): Node = {
-    val emojiImageView = new ImageView(image).modify(_.setPreserveRatio(true), _.setSmooth(true), _.setFitHeight(desiredImageHeight))
+    val emojiImageView = new ImageView(image).modify(_.setPreserveRatio(true), _.setSmooth(true), _.setFitHeight(desiredEmojiHeight))
     val emojiLabel = new Label(null, emojiImageView)
     emojiLabel setTooltip new Tooltip(name)
     val expandAnimation = new Timeline(
-      new KeyFrame(Duration.millis(0), new KeyValue(emojiImageView.fitHeightProperty(), desiredImageHeight: Number)),
-      new KeyFrame(Duration.millis(200), new KeyValue(emojiImageView.fitHeightProperty(), 128.0.max(desiredImageHeight * 3): Number)))
+      new KeyFrame(Duration.millis(0), new KeyValue(emojiImageView.fitHeightProperty(), desiredEmojiHeight: Number)),
+      new KeyFrame(Duration.millis(200), new KeyValue(emojiImageView.fitHeightProperty(), 128.0.max(desiredEmojiHeight * 3): Number)))
     emojiLabel setOnMouseClicked {evt => if (evt.getButton == MouseButton.PRIMARY) {
         expandAnimation.setRate(1)
         expandAnimation.playFromStart()
       }}
-    emojiLabel setOnMouseExited { evt => if (emojiImageView.getFitHeight != desiredImageHeight) {
+    emojiLabel setOnMouseExited { evt => if (emojiImageView.getFitHeight != desiredEmojiHeight) {
         expandAnimation.setRate(-1)
         if (expandAnimation.getStatus == Animation.Status.STOPPED) {
           expandAnimation.jumpTo(Duration.millis(200))
@@ -44,7 +44,7 @@ class DefaultMarkdownNodeFactory(
   //collapsed state
   private[this] val collapsedElementState = new util.LruMap[Any, Boolean](1000)
   
-  override def mkInlineContent(context: MarkdownRenderer.RenderContext)(title: String, url: String, altText: String): Node = {
+  override def mkInlineContent(context: MarkdownRenderer.RenderContext)(title: String, url: String, altText: String, width: Double, height: Double): Node = {
     def content(fitWidth: Double, fitHeight: Double) = {
       val container = new util.ResizableStackPane()
       val content = if (url matches ".+(avi|flv|mkv|webm|mp4)") {
@@ -61,7 +61,7 @@ class DefaultMarkdownNodeFactory(
       container.getChildren.add(content)
       container
     }
-    new CollapsibleContent(title, content(500, 500), url).modify(
+    new CollapsibleContent(title, content(if (width == -1) 500 else width, if (height == -1) 500 else height), url).modify(
       _.setTooltip(new Tooltip(altText)),
       self => self setOnMouseClicked { evt => evt.getButton match {
           case MouseButton.SECONDARY =>
@@ -77,7 +77,7 @@ class DefaultMarkdownNodeFactory(
   }
   
   def mkLink(context: MarkdownRenderer.RenderContext)(title: Option[String], url: String): Node = new Text(title.getOrElse(url)).modify(
-    _.getStyleClass.add("md-link"),
+    _.getStyleClass.addAll("hyperlink", "md-link"),
     _ setOnMouseClicked { evt => if (evt.getButton == MouseButton.PRIMARY) hostServices.showDocument(url) })
 
   def mkCodeLine(context: MarkdownRenderer.RenderContext)(code: String): Node = new Label(code).modify(_.setFont(monoscriptFont), _.setStyle("-fx-background-color: lightgray;"))

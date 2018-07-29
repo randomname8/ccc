@@ -10,7 +10,12 @@
 }
 .chat-date-label,
 .chat-preview-title-pane .title .text {
-  -fx-text-fill: #aaa;
+  -fx-text-fill: ladder(
+    -fx-color,
+    #aaa 55%,
+    derive(-fx-color,-63%) 75%,
+    #aaa 76%
+    );
   -fx-font: 0.8em sans-serif;
 }
 .chat-preview-title-pane > .title {
@@ -45,20 +50,14 @@
 }
 
 .chat-message-controls-pane {
-  -fx-background-color: #ccccff;
   -fx-background-radius: 0.25em;
   -fx-translate-y: -1em;
 }
-.chat-message-container:hover {
-  -fx-background-color: #d4e5d4;
-}
-
-.md-link {
-  -fx-fill: blue;
-  -fx-underline: true;
-}
-.md-link:hover {
-  -fx-underline: false;
+/*.chat-message-container:hover {
+  -fx-background-color: -fx-shadow-highlight-color;
+}*/
+.md-text {
+  -fx-fill: -fx-text-background-color;
 }
 
 /* text area input */
@@ -66,7 +65,7 @@
 .emoji-picker-button {
   -fx-background-color: white;
   -fx-graphic: url(emoji-pick-button.png);
-  
+
 }
 .emoji-picker-button:hover,
 .emoji-picker-button:armed {

@@ -5,9 +5,17 @@ import javafx.scene.Node
 import javafx.scene.image.Image
 import javafx.scene.text._
 import org.commonmark.{node => md, ext => mdext}
+import org.commonmark.parser.{Parser => MdParser}
 import scala.collection.JavaConverters._
 
-object MarkdownRenderer {
+class MarkdownRenderer(
+  val parser: MdParser = MdParser.builder.extensions(java.util.Arrays.asList(
+      org.commonmark.ext.autolink.AutolinkExtension.create(),
+      org.commonmark.ext.gfm.strikethrough.StrikethroughExtension.create())).customDelimiterProcessor(MarkdownExtensions.InsDelimiterProcessor).build(),
+  val emphasisFont: Font = Font.font(Font.getDefault.getFamily, FontPosture.ITALIC, Font.getDefault.getSize),
+  val strongEmphasisFont: Font = Font.font(Font.getDefault.getFamily, FontWeight.BOLD, Font.getDefault.getSize),
+  val strongerEmphasisFont: Font = Font.font(Font.getDefault.getFamily, FontWeight.BOLD, FontPosture.ITALIC, Font.getDefault.getSize)) {
+  import MarkdownRenderer._
 
   //need to extract the highligher.js and css to temp files
   //we want to keep these cached in temp, but we have to make sure we don't conflict with other programs, so in case we do, we'll just use
@@ -24,13 +32,6 @@ object MarkdownRenderer {
     (highlightsJs.uri, highlightsCss.uri)
   }
   
-  private[this] val markdownParser = org.commonmark.parser.Parser.builder.extensions(java.util.Arrays.asList(
-      org.commonmark.ext.autolink.AutolinkExtension.create(),
-      org.commonmark.ext.gfm.strikethrough.StrikethroughExtension.create())).customDelimiterProcessor(MarkdownExtensions.InsDelimiterProcessor).build()
-  private[this] val emphasisFont = Font.font(Font.getDefault.getFamily, FontPosture.ITALIC, Font.getDefault.getSize)
-  private[this] val strongEmphasisFont = Font.font(Font.getDefault.getFamily, FontWeight.BOLD, Font.getDefault.getSize)
-  private[this] val strongerEmphasisFont = Font.font(Font.getDefault.getFamily, FontWeight.BOLD, FontPosture.ITALIC, Font.getDefault.getSize)
-  
   def render(text: String,
              emojiProvider: Map[String, Image],
              nodeFactory: NodeFactory)(context: RenderContext): Seq[Node] = {
@@ -44,7 +45,7 @@ object MarkdownRenderer {
       curr.get.getChildren
     }
     
-    markdownParser.parse(text).accept(new md.AbstractVisitor {
+    parser.parse(text).accept(new md.AbstractVisitor {
         override def visit(p: md.Paragraph) = {
           super.visit(p)
           texts add new Text("\n")
@@ -55,11 +56,11 @@ object MarkdownRenderer {
           var lastIdx = 0
           for ((toReplace, emoji) <- usedEmojis) {
             val idx = text.indexOf(toReplace, lastIdx) // because of our previous split and find, the index *has* to exists
-            texts add new Text(text.substring(lastIdx, idx))
+            texts add nodeFactory.mkText(context)(text.substring(lastIdx, idx))
             texts add nodeFactory.mkEmoji(context)(toReplace, emoji)
             lastIdx = idx + toReplace.length
           }
-          if (lastIdx != text.length) texts add new Text(text.substring(lastIdx))
+          if (lastIdx != text.length) texts add nodeFactory.mkText(context)(text.substring(lastIdx))
         }
         override def visit(e: md.HardLineBreak) = texts add new Text("\n")
         override def visit(e: md.Emphasis) = modifyGeneratedTexts(e)(t => if (t.getFont == strongEmphasisFont) t.setFont(strongerEmphasisFont) else t.setFont(emphasisFont))
@@ -73,6 +74,13 @@ object MarkdownRenderer {
           e match {
             case e: mdext.gfm.strikethrough.Strikethrough => modifyGeneratedTexts(e)(_.setStrikethrough(true))
             case e: mdext.ins.Ins => modifyGeneratedTexts(e)(_.setUnderline(true))
+            case e if customNodeSupport.isDefinedAt(e) => 
+              val (node, inlined) = customNodeSupport(e)(emojiProvider, nodeFactory, context)
+              if (inlined) texts add node
+              else {
+                curr = None
+                res :+= node
+              }
             case _ => visitChildren(e)
           }
         }
@@ -97,7 +105,8 @@ object MarkdownRenderer {
               res
             case _ => " • "
           }
-          texts.get(currElem) match {
+          if (texts.size == currElem) texts.add(new Text(toInsert))
+          else texts.get(currElem) match {
             case t: Text => t.setText(toInsert + t.getText)
             case _ => texts.add(currElem, new Text(toInsert))
           }
@@ -120,10 +129,16 @@ object MarkdownRenderer {
     res
   }
   
+  type Inlined = Boolean
+  val customNodeSupport: PartialFunction[md.CustomNode, (Map[String, Image], NodeFactory, RenderContext) => (Node, Inlined)] = PartialFunction.empty
+  
+}
+object MarkdownRenderer {
   case class RenderContext(mediaPlayerProvider: () => util.VlcMediaPlayer)
   trait NodeFactory {
+    def mkText(context: RenderContext)(text: String): Text = new Text(text).modify(_.getStyleClass add "md-text")
     def mkEmoji(context: RenderContext)(name: String, image: Image): Node
-    def mkInlineContent(context: RenderContext)(title: String, url: String, altText: String): Node
+    def mkInlineContent(context: RenderContext)(title: String, url: String, altText: String, width: Double = -1, height: Double = -1): Node
     def mkLink(context: RenderContext)(title: Option[String], url: String): Node
     def mkCodeLine(context: RenderContext)(code: String): Node
     def mkCodeBlock(context: RenderContext)(lang: Option[String], code: String): Node
