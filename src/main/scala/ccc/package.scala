@@ -81,7 +81,7 @@ package object ccc {
    * MISC
    *********************/
   
-  implicit class ObservableValueExt[T](val property: ObservableValue[T]) extends AnyVal {
+  implicit class ObservableValueExt[T](private val property: ObservableValue[T]) extends AnyVal {
     import language.existentials
     def foreach(f: T => Unit): Unit = property.addListener((_: t forSome {type t >: T}, _, v) => f(v))
     def map[U](f: T => U): Binding[U] = new ObjectBinding[U] {
@@ -90,12 +90,13 @@ package object ccc {
     }
   }
   
-  implicit class Modifier[T](val t: T) extends AnyVal {
+  implicit class Modifier[T](private val t: T) extends AnyVal {
     @inline def modify(functions: T => Any*): T = { functions foreach (_(t)); t }
   }
   
-  implicit class ColorExt(val c: Color) extends AnyVal {
-    def colorToWeb = "#%02X%02X%02X".format((c.getRed * 255).toInt, (c.getGreen * 255).toInt, (c.getBlue * 255).toInt)
+  implicit class ColorExt(private val c: Color) extends AnyVal {
+    @inline def colorToWeb = "#%02X%02X%02X".format((c.getRed * 255).toInt, (c.getGreen * 255).toInt, (c.getBlue * 255).toInt)
+    @inline def toRgb: Int = ((c.getRed * 255).toInt << 16) | ((c.getGreen * 255).toInt << 8) | (c.getBlue * 255).toInt
   }
   
   implicit class SafeAbscribe[T](val t: T) extends AnyVal {
