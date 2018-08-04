@@ -33,7 +33,8 @@ class ChatList[User, Message](val hostServices: HostServices,
     Seq(new TextFlow(new Text(messageContent(msg)))))
   val userNameNodeFactory = new SimpleObjectProperty[User => Node](this, "userNameNodeFactory")
   val userPictureCustomizer = new SimpleObjectProperty[(User, util.WeakImage, Region) => Unit](this, "userPictureCustomizer", (_, avatar, pane) =>
-    pane setBackground imageBackground(avatar.get))
+    avatar.onRetrieve(i => pane setBackground imageBackground(i)))
+//    pane setBackground imageBackground(avatar.get))
   getSelectionModel setSelectionMode SelectionMode.MULTIPLE
   
   setCellFactory(_ => new ChatBoxListCell())

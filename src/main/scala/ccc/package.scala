@@ -1,4 +1,6 @@
+import javafx.application.Platform
 import javafx.scene.image.Image
+import scala.concurrent.ExecutionContext
 
 package object ccc {
   import javafx.beans.value.ObservableValue
@@ -99,7 +101,13 @@ package object ccc {
     @inline def toRgb: Int = ((c.getRed * 255).toInt << 16) | ((c.getGreen * 255).toInt << 8) | (c.getBlue * 255).toInt
   }
   
-  implicit class SafeAbscribe[T](val t: T) extends AnyVal {
+  implicit class SafeAbscribe[T](private val t: T) extends AnyVal {
     def abscribe[U >: T]: U = t
+  }
+  
+  object JavafxExecutionContext extends ExecutionContext {
+    implicit val context = this
+    override def execute(runnable: Runnable) = Platform.runLater(runnable)
+    override def reportFailure(cause: Throwable) = ExecutionContext.defaultReporter(cause)
   }
 }

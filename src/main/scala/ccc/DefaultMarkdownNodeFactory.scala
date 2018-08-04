@@ -52,8 +52,8 @@ class DefaultMarkdownNodeFactory(
         mediaPlayer.setMedia(url, None)
         mediaPlayer
       } else {
-        val image = imagesCache(url).get
-        val imageView = new ImageView(image).modify(_.setFitHeight(fitWidth), _.setFitWidth(fitHeight), _.setPreserveRatio(true))
+        val imageView = new ImageView().modify(_.setFitHeight(fitWidth), _.setFitWidth(fitHeight), _.setPreserveRatio(true))
+        imagesCache(url).onRetrieve(imageView.setImage)
         imageView.fitWidthProperty.bind(container.prefWidthProperty.map(v => if (v.doubleValue == -1) fitWidth else v))
         imageView.fitHeightProperty.bind(container.prefHeightProperty.map(v => if (v.doubleValue == -1) fitHeight else v))
         imageView
