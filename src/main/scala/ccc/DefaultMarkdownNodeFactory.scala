@@ -8,6 +8,7 @@ import javafx.scene.{Node, Scene}
 import javafx.scene.control.{Label, Tooltip, TitledPane, ScrollPane}
 import javafx.scene.image.{ImageView, Image}
 import javafx.scene.input.MouseButton
+import javafx.scene.layout.{HBox, Priority}
 import javafx.scene.text.{Font, Text}
 import javafx.stage.Stage
 import javafx.util.Duration
@@ -112,7 +113,7 @@ class DefaultMarkdownNodeFactory(
     webView
   }
   
-  class CollapsibleContent(title: String, content: Node, url: String) extends TitledPane(title, content) {
+  class CollapsibleContent(title: String, content: Node, url: String) extends TitledPane(title, new HBox(content)) {
     getStyleClass.add("collapsible-content")
     setMaxWidth(javafx.scene.layout.Region.USE_PREF_SIZE)
     this setExpanded collapsedElementState.get(url).getOrElse(true)
