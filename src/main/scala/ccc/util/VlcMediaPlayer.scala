@@ -6,6 +6,7 @@ import javafx.scene.control.{Label, ProgressIndicator}
 import javafx.scene.image.{Image, ImageView}
 import javafx.scene.layout.StackPane
 import uk.co.caprica.vlcj.component.DirectMediaPlayerComponent
+import uk.co.caprica.vlcj.player.{MediaPlayer => VlcPlayer}
 import uk.co.caprica.vlcj.player.direct.DefaultDirectMediaPlayer
 import uk.co.caprica.vlcj.player.direct.format.RV32BufferFormat
 
@@ -14,40 +15,40 @@ import uk.co.caprica.vlcj.player.direct.format.RV32BufferFormat
  */
 class VlcMediaPlayer extends MediaPlayer {
   val mediaPlayerComponent = new DirectMediaPlayerComponent(new RV32BufferFormat(_, _)) {
-    override def finished(mediaPlayer) = Platform.runLater { () =>
+    override def finished(mediaPlayer: VlcPlayer) = Platform.runLater { () =>
       currentTime.set(totalDuration.get)
       VlcMediaPlayer.this.playing.set(false)
     }
-    override def error(player) = Platform.runLater { () =>
+    override def error(player: VlcPlayer) = Platform.runLater { () =>
       VlcMediaPlayer.this.playing.set(false)
       errorLabel setVisible true
     }
-    override def lengthChanged(player, length) = Platform.runLater { () =>
+    override def lengthChanged(player: VlcPlayer, length: Long) = Platform.runLater { () =>
       totalDuration set length
     }
-    override def buffering(player, newCache) = Platform.runLater { () =>
+    override def buffering(player: VlcPlayer, newCache: Float) = Platform.runLater { () =>
       bufferingStatus setVisible newCache != 100
     }
-    override def playing(player) = Platform.runLater { () =>
+    override def playing(player: VlcPlayer) = Platform.runLater { () =>
       errorLabel setVisible false
       bufferingStatus setVisible false
       thumbnailImageView setVisible false
       VlcMediaPlayer.this.playing.set(true)
     }
-    override def paused(player) = Platform.runLater { () =>
+    override def paused(player: VlcPlayer) = Platform.runLater { () =>
       VlcMediaPlayer.this.playing.set(false)
     }
-    override def stopped(player) = Platform.runLater { () =>
+    override def stopped(player: VlcPlayer) = Platform.runLater { () =>
       VlcMediaPlayer.this.playing.set(false)
     }
-    override def volumeChanged(player, newVolume) = Platform.runLater { () =>
+    override def volumeChanged(player: VlcPlayer, newVolume: Float) = Platform.runLater { () =>
       val currVolume = player.getVolume / 100.0f
       if (volume.get != currVolume) volume set currVolume
     }
-    override def muted(player, muted) = Platform.runLater { () =>
+    override def muted(player: VlcPlayer, muted: Boolean) = Platform.runLater { () =>
       if (muted) volume set 0
     }
-    override def positionChanged(player, newPosition) = Platform.runLater { () =>
+    override def positionChanged(player: VlcPlayer, newPosition: Float) = Platform.runLater { () =>
       currentTime set (totalDuration.get * newPosition).toLong
     }
   }
