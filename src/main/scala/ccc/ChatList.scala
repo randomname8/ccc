@@ -32,8 +32,15 @@ class ChatList[User, Message](val hostServices: HostServices,
   val messageRenderFactory = new SimpleObjectProperty[(Message, () => util.VlcMediaPlayer) => Seq[Node]](this, "additionalMessageRenderFactory", (msg, _) => 
     Seq(new TextFlow(new Text(messageContent(msg)))))
   val userNameNodeFactory = new SimpleObjectProperty[User => Node](this, "userNameNodeFactory")
-  val userPictureCustomizer = new SimpleObjectProperty[(User, util.WeakImage, Region) => Unit](this, "userPictureCustomizer", (_, avatar, pane) =>
-    avatar.onRetrieve(i => pane setBackground imageBackground(i)))
+  val userPictureCustomizer = new SimpleObjectProperty[(User, util.WeakImage, Region) => Unit](this, "userPictureCustomizer", (_, avatar, pane) => {
+      pane.setBackground(null)
+      val key = new Object
+      pane.getProperties.put("avatar-key", key)
+      avatar.onRetrieve { i => 
+        if (pane.getProperties.get("avatar-key") eq key)
+          pane setBackground imageBackground(i)
+      }
+    })
 //    pane setBackground imageBackground(avatar.get))
   getSelectionModel setSelectionMode SelectionMode.MULTIPLE
   
@@ -111,7 +118,7 @@ class ChatList[User, Message](val hostServices: HostServices,
       val messageContainer = chatMessagePane.lookup(".chat-message").asInstanceOf[Pane]
       val renderedMarkdown = 
         try messageRenderFactory.get()(msg, renderContext)
-        catch { case ex@(_:ExceptionInInitializerError | _:NoClassDefFoundError)  => Seq(new javafx.scene.text.Text("Failed rendering message: " + ex).modify(_.setFill(javafx.scene.paint.Color.RED))) }
+      catch { case ex@(_:ExceptionInInitializerError | _:NoClassDefFoundError)  => Seq(new javafx.scene.text.Text("Failed rendering message: " + ex).modify(_.setFill(javafx.scene.paint.Color.RED))) }
       renderedMarkdown foreach { n =>
         n match {
           case r: Region => r.maxWidthProperty bind maxWidth
