@@ -8,7 +8,7 @@ import javafx.scene.{Node, Scene}
 import javafx.scene.control.{Label, Tooltip, TitledPane, ScrollPane}
 import javafx.scene.image.{ImageView, Image}
 import javafx.scene.input.MouseButton
-import javafx.scene.layout.{HBox, Priority}
+import javafx.scene.layout.{HBox}
 import javafx.scene.text.{Font, Text}
 import javafx.stage.Stage
 import javafx.util.Duration
@@ -85,9 +85,9 @@ class DefaultMarkdownNodeFactory(
   
   def mkCodeBlock(context: MarkdownRenderer.RenderContext)(language: Option[String], code: String): Node = {
     //check if we have some webview available, otherwise create one
-      val webView = new WebView()
-      webView setContextMenuEnabled false
-      webView.getStyleClass add "code-block"
+    val webView = new WebView()
+    webView setContextMenuEnabled false
+    webView.getStyleClass add "code-block"
     val langClass = language.getOrElse("").replace("\"", "&quot;")
     val content = code.replace("<", "&lt;").replace(">", "&gt;")
     val html = s"""
@@ -102,7 +102,7 @@ class DefaultMarkdownNodeFactory(
 </body>
 </html>"""
     webView.getEngine.getLoadWorker.stateProperty.addListener { (_, _, state) => 
-      if (state == javafx.concurrent.Worker.State.SUCCEEDED) {
+      if (state == javafx.concurrent.Worker.State.SUCCEEDED && webView.getEngine.getLocation != "about:blank") {
         val el = webView.getEngine.getDocument.getElementById("code")
         val height = el.asInstanceOf[JSObject].getMember("scrollHeight").asInstanceOf[Int].toDouble + Font.getDefault.getSize * 2
         webView.setMinHeight(height)
@@ -110,6 +110,7 @@ class DefaultMarkdownNodeFactory(
       }
     }
     webView.getEngine.loadContent(html)
+    webView.sceneProperty foreach (s =>  if (s == null) webView.getEngine.load("about:blank"))
     webView
   }
   
