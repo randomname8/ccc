@@ -7,13 +7,19 @@ import javafx.scene.image.{Image, ImageView}
 import javafx.scene.layout.StackPane
 import uk.co.caprica.vlcj.component.DirectMediaPlayerComponent
 import uk.co.caprica.vlcj.player.{MediaPlayer => VlcPlayer}
+import uk.co.caprica.vlcj.discovery.NativeDiscovery
 import uk.co.caprica.vlcj.player.direct.DefaultDirectMediaPlayer
 import uk.co.caprica.vlcj.player.direct.format.RV32BufferFormat
+
+object VlcMediaPlayer {
+  private[VlcMediaPlayer] lazy val runNativeDiscovery = new NativeDiscovery().discover()
+}
 
 /**
  * A MediaPlayer configuration for a vlc DirectMediaPlayerComponent.
  */
 class VlcMediaPlayer extends MediaPlayer {
+  VlcMediaPlayer.runNativeDiscovery //run this only once
   val mediaPlayerComponent = new DirectMediaPlayerComponent(new RV32BufferFormat(_, _)) {
     override def finished(mediaPlayer: VlcPlayer) = Platform.runLater { () =>
       currentTime.set(totalDuration.get)
