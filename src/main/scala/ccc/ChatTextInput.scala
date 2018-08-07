@@ -41,8 +41,6 @@ class ChatTextInput(val markdownRenderer: MarkdownRenderer,
       val previewTitledPane = new TitledPane("preview", visualScrollPane).modify(_.getStyleClass add "chat-preview-title-pane")
       container.getChildren.set(container.getChildren.indexOf(visual), previewTitledPane)
       
-      visualScrollPane.prefHeightProperty bind textArea.heightProperty
-      
       var instantiatedPlayers = Vector.empty[util.VlcMediaPlayer]
       textArea.textProperty foreach { s =>
         val nodes = if (s == null || s.isEmpty) Seq.empty
