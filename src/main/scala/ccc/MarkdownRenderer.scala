@@ -1,7 +1,9 @@
 package ccc
 
 import better.files._
+import javafx.geometry.{Orientation, Pos}
 import javafx.scene.Node
+import javafx.scene.control.Separator
 import javafx.scene.image.Image
 import javafx.scene.text._
 import org.commonmark.{node => md, ext => mdext}
@@ -34,7 +36,10 @@ class MarkdownRenderer(
   
   def render(text: String,
              emojiProvider: Map[String, Image],
-             nodeFactory: NodeFactory)(context: RenderContext): Seq[Node] = {
+             nodeFactory: NodeFactory)(context: RenderContext): Seq[Node] = renderMarkdown(parser.parse(text), emojiProvider, nodeFactory, context)
+
+  private def renderMarkdown(node: md.Node, emojiProvider: Map[String, Image],
+                             nodeFactory: NodeFactory, context: RenderContext): Seq[Node] = {
     var res = Vector.empty[Node]
     var curr: Option[TextFlow] = None //the currently TextFlow buing built, starts in none because we might not build any
     def texts = {
@@ -44,8 +49,7 @@ class MarkdownRenderer(
       }
       curr.get.getChildren
     }
-    
-    parser.parse(text).accept(new md.AbstractVisitor {
+    node.accept(new md.AbstractVisitor {
         override def visit(p: md.Paragraph) = {
           super.visit(p)
           texts add new Text("\n")
@@ -70,6 +74,16 @@ class MarkdownRenderer(
             case _ => ""
           })
         override def visit(e: md.Link) = texts add nodeFactory.mkLink(context)(Option(e.getTitle), e.getDestination)
+        override def visit(e: md.BlockQuote) = {
+          e.getFirstChild match {
+            case null => texts add new Text(">\n")
+            case node => 
+              val toBeQuoted = renderMarkdown(e.getFirstChild, emojiProvider, nodeFactory, context)
+              curr = None
+              res :+= hbox(new Separator(Orientation.VERTICAL), vbox(toBeQuoted:_*)(fillWidth = true, spacing = 0, alignment = Pos.TOP_LEFT))(fillHeight = true, alignment = Pos.TOP_LEFT)
+          }
+          
+        }
         override def visit(e: md.CustomNode) = {
           e match {
             case e: mdext.gfm.strikethrough.Strikethrough => modifyGeneratedTexts(e)(_.setStrikethrough(true))
