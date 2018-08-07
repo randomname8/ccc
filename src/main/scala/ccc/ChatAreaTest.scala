@@ -39,7 +39,7 @@ class ChatAreaTest extends BaseApplication {
   val chatTextInput = new ChatTextInput(mdRenderer, mdNodeFactory, emojisLookup)
   val sceneRoot = new BorderPane {
     this center new ScrollPane(chatList).modify(_ setFitToWidth true, _ setFitToHeight true)
-    this bottom chatTextInput
+    this bottom hbox(chatTextInput, new javafx.scene.control.Button("press me"))
   }
   
   val imgSize = Font.getDefault.getSize * 4
@@ -70,6 +70,16 @@ for i in {0..7}; do sudo cpufreq-set -g performance -u 2GHz -c $i; done;
 ![alt text](https://cdn.discordapp.com/attachments/307260368764534784/415004984074305556/Peek_2018-02-19_01-41.webm "prior demo of video playback!")""")
   
   chatList.addEntry("(⊙.⊙)☂", totoro, "Some emojis now, vampire :vampire:,:chopsticks:,:grin:,:runner_tone1:,:runner_tone2:,:runner_tone3:,:runner_tone4:,😼")
+  chatList.addEntry("(⊙.⊙)☂", totoro, """Let's try some text\
+here's some quoted text
+
+> Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.\
+Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in\
+reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa\
+qui officia deserunt mollit anim id est laborum.
+         
+so he says.
+""")
   for (i <- 0 until 100) {
     val (image, user) = if (i % 2 == 0) (totoro, "(⊙.⊙)☂") else (panda, "Panda")
     for (j <- 0 until (math.random * 5).toInt) chatList.addEntry(user, image, s"$i-$j " + emojis.keysIterator.drop((math.random * (emojis.size - 1)).toInt).next)
