@@ -45,11 +45,11 @@ class ChatAreaTest extends BaseApplication {
   val imgSize = Font.getDefault.getSize * 4
   val panda = new util.WeakImage("https://cdn.discordapp.com/avatars/84766711735136256/28063abbe16697aa29d99d004ebd177f.png?size=256", imgSize, imgSize)
   val totoro = new util.WeakImage("https://cdn.discordapp.com/avatars/183411122848661505/81e6a9370e6a54ea19b3acad6c811e61.png?size=256", imgSize, imgSize)
-  chatList.addEntry("(⊙.⊙)☂", totoro, """**How** *about* __some__ ~~markdown~~ _**rendering**_? [I'm an inline-style link](https://duckduckgo.com/ \"link with custom text!\") 
+  chatList.addEntry("(⊙.⊙)☂", totoro, """**How** *about* __some__ ~~markdown~~ _**rendering**_? [I'm an inline-style link](https://duckduckgo.com/ "link with custom text!") 
 
 Another link just in case https://duckduckgo.com/
 
-nSince we are not discord, we can use markdown for images too ![alt text](https://lord2015.files.wordpress.com/2015/02/totoro_wallpaper_by_vampiresuper_sayajin-d6gx09h.png "Totoro!")""")
+Since we are not discord, we can use markdown for images too ![alt text](https://lord2015.files.wordpress.com/2015/02/totoro_wallpaper_by_vampiresuper_sayajin-d6gx09h.png "Totoro!")""")
   
   chatList.addEntry("(⊙.⊙)☂", totoro, "inline `code` here")
   chatList.addEntry("(⊙.⊙)☂", totoro, """code block now in scala
