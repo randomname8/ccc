@@ -168,11 +168,12 @@ class MarkdownRenderer(
         var text = t.getText
         var i = text.length
         var nonWhitespaceFound = false
-        while ({i -= 1; !nonWhitespaceFound && i >= 0}) {
-          nonWhitespaceFound = !text.charAt(i).isWhitespace
+        while (!nonWhitespaceFound && i > 0) {
+          nonWhitespaceFound = !text.charAt(i - 1).isWhitespace
+          if (!nonWhitespaceFound) i -= 1
         }
-        if (i != text.length - 1) //remove the whitespace found
-          text = text.substring(0, i + 1)
+        if (i != text.length) //remove the whitespace found
+          text = text.substring(0, i)
         
         if (text.isEmpty) texts.remove(t)
         else t.setText(text)
