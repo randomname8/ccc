@@ -49,10 +49,17 @@ class MarkdownRenderer(
       }
       curr.get.getChildren
     }
+    def appendText(t: String) = {
+      val ts = texts.asScala
+      ts.lastOption match {
+        case Some(st: PlainText) => st.setText(st.getText + t)
+        case _ => ts += nodeFactory.mkText(context)(t)
+      }
+    }
     node.accept(new md.AbstractVisitor {
         override def visit(p: md.Paragraph) = {
           super.visit(p)
-          texts add new Text("\n")
+          appendText("\n")
         }
         override def visit(t: md.Text) = {
           val text = t.getLiteral
@@ -60,13 +67,13 @@ class MarkdownRenderer(
           var lastIdx = 0
           for ((toReplace, emoji) <- usedEmojis) {
             val idx = text.indexOf(toReplace, lastIdx) // because of our previous split and find, the index *has* to exists
-            texts add nodeFactory.mkText(context)(text.substring(lastIdx, idx))
+            appendText(text.substring(lastIdx, idx))
             texts add nodeFactory.mkEmoji(context)(toReplace, emoji)
             lastIdx = idx + toReplace.length
           }
-          if (lastIdx != text.length) texts add nodeFactory.mkText(context)(text.substring(lastIdx))
+          if (lastIdx != text.length) appendText(text.substring(lastIdx))
         }
-        override def visit(e: md.HardLineBreak) = texts add new Text("\n")
+        override def visit(e: md.HardLineBreak) = appendText("\n")
         override def visit(e: md.Emphasis) = modifyGeneratedTexts(e)(t => if (t.getFont == strongEmphasisFont) t.setFont(strongerEmphasisFont) else t.setFont(emphasisFont))
         override def visit(e: md.StrongEmphasis) = modifyGeneratedTexts(e)(t => if (t.getFont == emphasisFont) t.setFont(strongerEmphasisFont) else t.setFont(strongEmphasisFont))
         override def visit(e: md.Image) = texts add nodeFactory.mkInlineContent(context)(e.getTitle, e.getDestination, e.getFirstChild match {
@@ -76,7 +83,7 @@ class MarkdownRenderer(
         override def visit(e: md.Link) = texts add nodeFactory.mkLink(context)(Option(e.getTitle), e.getDestination)
         override def visit(e: md.BlockQuote) = {
           e.getFirstChild match {
-            case null => texts add new Text(">\n")
+            case null => appendText(">\n")
             case node => 
               val toBeQuoted = renderMarkdown(e.getFirstChild, emojiProvider, nodeFactory, context)
               curr = None
@@ -128,18 +135,54 @@ class MarkdownRenderer(
         }
         
         def modifyGeneratedTexts(n: md.Node)(f: Text => Unit): Unit = {
-          val start = texts.size
+          //ensures a new context so that the styles may be applied to
+          val start = texts.asScala.lastOption match {
+            case Some(t: PlainText) => //check if the last text is already a plain text, if it is empty it serves our purposes, otherwise we need a new one to ensure the style applied here does not leak
+              if (t.getText.nonEmpty) texts add nodeFactory.mkText(context)("")
+              texts.size - 1
+              
+            case other => texts.size
+          }
           visitChildren(n)
           for (i <- start until texts.size) texts.get(i) match {
-            case t: Text => f(t)
+            case t: Text =>  f(t)
+            case _ =>
+          }
+          
+          //check if the last node is already an empty text, if not, add one to avoid getting new text appended to this format and hence leaking this format
+          texts.asScala.lastOption match {
+            case Some(t: PlainText) if t.getText.nonEmpty => texts add nodeFactory.mkText(context)("")
             case _ =>
           }
         }
       })
     texts.asScala.lastOption foreach { //in the last text, make sure we remove the trailing \n
-      case t: Text => t.setText(t.getText.trim)
+      case t: Text => 
+        val nt = t.getText.trim
+        if (nt.isEmpty) texts.remove(t)
+        else t.setText(nt)
       case _ =>
     }
+    
+    
+//    def describe(n: javafx.scene.Node): String = n match {
+//      case t: Text => '"' + t.getText + '"'
+//      case p: javafx.scene.Parent => p.getChildrenUnmodifiable.asScala.map(describe).mkString(p.getClass.getSimpleName + "{", ",", "}")
+//      case n => n.toString
+//    }
+    res = res.filter { //remove empty TextFlows if any
+      case tf: TextFlow => !tf.getChildren.isEmpty 
+      case other => true
+    }.map { // simplify TextFlows that contain only one element and it is not a Text by unwrapping it
+      case tf: TextFlow if tf.getChildren.size == 1 =>
+        tf.getChildren.get(0) match {
+          case t: Text => tf
+          case other => other
+        }
+      case other => other
+    }
+//    println("result=======")
+//    res map describe foreach println
     res
   }
   
@@ -149,8 +192,12 @@ class MarkdownRenderer(
 }
 object MarkdownRenderer {
   case class RenderContext(mediaPlayerProvider: () => util.VlcMediaPlayer)
+  /**
+   * Type that extends Text just to signal that it is the simplest type of text, safe to be merged with other instances of PlainText
+   */
+  trait PlainText extends Text
   trait NodeFactory {
-    def mkText(context: RenderContext)(text: String): Text = new Text(text).modify(_.getStyleClass add "md-text")
+    def mkText(context: RenderContext)(text: String): PlainText = {val t = new Text(text) with PlainText; t.getStyleClass add "md-text"; t }
     def mkEmoji(context: RenderContext)(name: String, image: Image): Node
     def mkInlineContent(context: RenderContext)(title: String, url: String, altText: String, width: Double = -1, height: Double = -1): Node
     def mkLink(context: RenderContext)(title: Option[String], url: String): Node
