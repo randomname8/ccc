@@ -52,8 +52,24 @@ class MarkdownRenderer(
     def appendText(t: String) = {
       val ts = texts.asScala
       ts.lastOption match {
-        case Some(st: PlainText) => st.setText(st.getText + t)
+        case Some(st: Text) => st.setText(st.getText + t)
         case _ => ts += nodeFactory.mkText(context)(t)
+      }
+    }
+    def ensureNewTextRun(): Int = {
+      texts.asScala.lastOption match {
+        case Some(t: Text) => //check if the last text is already a plain text, if it is empty it serves our purposes, otherwise we need a new one to ensure the style applied here does not leak
+          if (t.getText.nonEmpty) texts add nodeFactory.mkText(context)("")
+          texts.size - 1
+              
+        case other => texts.size
+      }
+    }
+    def sealCurrentTextRun() = {
+      //check if the last node is already an empty text, if not, add one to avoid getting new text appended to this format and hence leaking this format
+      texts.asScala.lastOption match {
+        case Some(t: Text) if t.getText.nonEmpty => texts add nodeFactory.mkText(context)("")
+        case _ =>
       }
     }
     node.accept(new md.AbstractVisitor {
@@ -117,7 +133,7 @@ class MarkdownRenderer(
           visitChildren(e)
         }
         override def visit(e: md.ListItem) = {
-          val currElem = texts.size
+          val currElem = ensureNewTextRun()
           visitChildren(e)
           val toInsert = e.getParent match {
             case _: md.OrderedList => 
@@ -126,41 +142,40 @@ class MarkdownRenderer(
               res
             case _ => " • "
           }
-          if (texts.size == currElem) texts.add(new Text(toInsert))
-          else texts.get(currElem) match {
+          if (texts.size == currElem) { //if nothing was added yet (empty element) just insert the point marker
+            appendText(toInsert)
+          } else texts.get(currElem) match {
             case t: Text => t.setText(toInsert + t.getText)
-            case _ => texts.add(currElem, new Text(toInsert))
+            case _ => texts.add(currElem, nodeFactory.mkText(context)(toInsert))
           }
+          sealCurrentTextRun()
           
         }
         
         def modifyGeneratedTexts(n: md.Node)(f: Text => Unit): Unit = {
-          //ensures a new context so that the styles may be applied to
-          val start = texts.asScala.lastOption match {
-            case Some(t: PlainText) => //check if the last text is already a plain text, if it is empty it serves our purposes, otherwise we need a new one to ensure the style applied here does not leak
-              if (t.getText.nonEmpty) texts add nodeFactory.mkText(context)("")
-              texts.size - 1
-              
-            case other => texts.size
-          }
+          val start = ensureNewTextRun()
           visitChildren(n)
           for (i <- start until texts.size) texts.get(i) match {
             case t: Text =>  f(t)
             case _ =>
           }
-          
-          //check if the last node is already an empty text, if not, add one to avoid getting new text appended to this format and hence leaking this format
-          texts.asScala.lastOption match {
-            case Some(t: PlainText) if t.getText.nonEmpty => texts add nodeFactory.mkText(context)("")
-            case _ =>
-          }
+          sealCurrentTextRun()
         }
       })
     texts.asScala.lastOption foreach { //in the last text, make sure we remove the trailing \n
-      case t: Text => 
-        val nt = t.getText.trim
-        if (nt.isEmpty) texts.remove(t)
-        else t.setText(nt)
+      case t: Text =>
+        //remove trailing spaces to the text and check if it becomes empty to remove it, otherwise keep the trimmed version
+        var text = t.getText
+        var i = text.length
+        var nonWhitespaceFound = false
+        while ({i -= 1; !nonWhitespaceFound && i >= 0}) {
+          nonWhitespaceFound = !text.charAt(i).isWhitespace
+        }
+        if (i != text.length - 1) //remove the whitespace found
+          text = text.substring(0, i + 1)
+        
+        if (text.isEmpty) texts.remove(t)
+        else t.setText(text)
       case _ =>
     }
     
@@ -173,14 +188,8 @@ class MarkdownRenderer(
     res = res.filter { //remove empty TextFlows if any
       case tf: TextFlow => !tf.getChildren.isEmpty 
       case other => true
-    }.map { // simplify TextFlows that contain only one element and it is not a Text by unwrapping it
-      case tf: TextFlow if tf.getChildren.size == 1 =>
-        tf.getChildren.get(0) match {
-          case t: Text => tf
-          case other => other
-        }
-      case other => other
     }
+    
 //    println("result=======")
 //    res map describe foreach println
     res
@@ -192,12 +201,8 @@ class MarkdownRenderer(
 }
 object MarkdownRenderer {
   case class RenderContext(mediaPlayerProvider: () => util.VlcMediaPlayer)
-  /**
-   * Type that extends Text just to signal that it is the simplest type of text, safe to be merged with other instances of PlainText
-   */
-  trait PlainText extends Text
   trait NodeFactory {
-    def mkText(context: RenderContext)(text: String): PlainText = {val t = new Text(text) with PlainText; t.getStyleClass add "md-text"; t }
+    def mkText(context: RenderContext)(text: String): Text = {val t = new Text(text); t.getStyleClass add "md-text"; t }
     def mkEmoji(context: RenderContext)(name: String, image: Image): Node
     def mkInlineContent(context: RenderContext)(title: String, url: String, altText: String, width: Double = -1, height: Double = -1): Node
     def mkLink(context: RenderContext)(title: Option[String], url: String): Node
