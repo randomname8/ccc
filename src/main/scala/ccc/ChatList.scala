@@ -5,6 +5,7 @@ import java.time.format.{DateTimeFormatter, FormatStyle}
 import javafx.application.HostServices
 import javafx.beans.binding.Bindings
 import javafx.beans.property.SimpleObjectProperty
+import javafx.beans.value.ChangeListener
 import javafx.beans.value.ObservableValue
 import javafx.collections.FXCollections
 import javafx.fxml.FXMLLoader
@@ -32,13 +33,36 @@ class ChatList[User, Message](val hostServices: HostServices,
   val messageRenderFactory = new SimpleObjectProperty[(Message, () => util.VlcMediaPlayer) => Seq[Node]](this, "additionalMessageRenderFactory", (msg, _) => 
     Seq(new TextFlow(new Text(messageContent(msg)))))
   val userNameNodeFactory = new SimpleObjectProperty[User => Node](this, "userNameNodeFactory")
-  val userPictureCustomizer = new SimpleObjectProperty[(User, util.WeakImage, Region) => Unit](this, "userPictureCustomizer", (_, avatar, pane) => {
-      pane.setBackground(null)
-      val key = new Object
-      pane.getProperties.put("avatar-key", key)
-      avatar.onRetrieve { i => 
-        if (pane.getProperties.get("avatar-key") eq key)
-          pane setBackground imageBackground(i)
+  val chatBoxCustomizer = new SimpleObjectProperty[(ChatBox[User, Message], ChatBoxListCell) => Unit](this, "userPictureCustomizer", (chatbox, cell) => {
+      cell.avatarPane.setBackground(null)
+      chatbox.avatar.onRetrieve { i =>
+        def configureAvatar() = if (chatbox == cell.getItem) {
+          if (util.JfxUtils.isAnimated(i)) {
+            val snap = util.JfxUtils.snapshot(i)
+            cell.avatarPane setBackground imageBackground(snap)
+                
+            lazy val hoverListener: ChangeListener[java.lang.Boolean] = { (_, _, b) =>
+              if (b) cell.avatarPane setBackground imageBackground(i)
+              else cell.avatarPane setBackground imageBackground(snap)
+            }
+            lazy val itemChangedSelfRemover: ChangeListener[ChatBox[User, Message]] = { (_, _, i) => if (i != chatbox) {
+                cell.pane.hoverProperty.removeListener(hoverListener)
+                cell.itemProperty.removeListener(itemChangedSelfRemover)
+              }
+            }
+            cell.pane.hoverProperty.addListener(hoverListener)
+            cell.itemProperty.addListener(itemChangedSelfRemover)
+                
+          } else cell.avatarPane setBackground imageBackground(i)
+        }
+        
+        if (i.getProgress == 1) configureAvatar()
+        else {
+          i.progressProperty foreach {
+            case n if n.doubleValue == 1 => configureAvatar()
+            case _ =>
+          }
+        }
       }
     })
 //    pane setBackground imageBackground(avatar.get))
@@ -67,7 +91,7 @@ class ChatList[User, Message](val hostServices: HostServices,
   }
   
   private val messagesDateTimeFormat = DateTimeFormatter.ofLocalizedDateTime(FormatStyle.MEDIUM)
-  private class ChatBoxListCell extends ListCell[ChatBox[User, Message]] {
+  class ChatBoxListCell private[ChatList]() extends ListCell[ChatBox[User, Message]] {
     val pane = FXMLLoader.load[Pane](getClass.getResource("/chat-box-entry.fxml"))
     val avatarPane = pane.lookup(".avatar-pane").asInstanceOf[Pane].modify(
       _.setOnMouseClicked(evt => if (evt.getButton == MouseButton.MIDDLE && getItem != null) {
@@ -94,7 +118,7 @@ class ChatList[User, Message](val hostServices: HostServices,
       localMediaPlayers = Vector.empty
       
       if (!empty && item.messages.nonEmpty) {
-        userPictureCustomizer.get.apply(item.user, item.avatar, avatarPane)
+        chatBoxCustomizer.get.apply(item, this)
         Option(userNameNodeFactory.get).fold(userLabel setText userDisplayName(item.user))(nodeFactory =>
           userLabel setGraphic nodeFactory(item.user))
         

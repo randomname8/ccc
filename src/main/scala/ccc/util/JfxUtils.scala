@@ -5,6 +5,9 @@ import javafx.beans.binding.{BooleanBinding, ObjectBinding}
 import javafx.beans.value.{ObservableBooleanValue, ObservableValue}
 import javafx.geometry.Bounds
 import javafx.scene.{Node, Scene}
+import javafx.scene.image.Image
+import javafx.scene.image.ImageView
+import javafx.scene.image.WritableImage
 import javafx.scene.text.{Font, Text}
 import javafx.stage.Window
 
@@ -88,4 +91,9 @@ object JfxUtils {
     bind(values:_*)
     override def computeValue = compute()
   }
+  
+  private val animationFieldAccessor = classOf[Image].getDeclaredMethod("isAnimation")
+  animationFieldAccessor.setAccessible(true)
+  def isAnimated(image: Image): Boolean = animationFieldAccessor.invoke(image).asInstanceOf[Boolean]
+  def snapshot(image: Image): Image = new ImageView(image).snapshot(null, new WritableImage(image.getWidth.toInt, image.getHeight.toInt))
 }
