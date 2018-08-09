@@ -43,7 +43,7 @@ class ChatAreaTest extends BaseApplication {
   }
   
   val imgSize = Font.getDefault.getSize * 4
-  val panda = new util.WeakImage("https://cdn.discordapp.com/avatars/84766711735136256/28063abbe16697aa29d99d004ebd177f.png?size=256", imgSize, imgSize)
+  val nekobus = new util.WeakImage("https://78.media.tumblr.com/tumblr_lovxnpURC01qlfu1ho1_500.gif", imgSize, imgSize)
   val totoro = new util.WeakImage("https://cdn.discordapp.com/avatars/183411122848661505/81e6a9370e6a54ea19b3acad6c811e61.png?size=256", imgSize, imgSize)
   
   chatList.addEntry("(⊙.⊙)☂", totoro, """**How** *about* __some__ ~~markdown~~ _**rendering**_? [I'm an inline-style link](https://duckduckgo.com/ "link with custom text!") 
@@ -94,7 +94,7 @@ and an ordered list too
   
   
   for (i <- 0 until 100) {
-    val (image, user) = if (i % 2 == 0) (totoro, "(⊙.⊙)☂") else (panda, "Panda")
+    val (image, user) = if (i % 2 == 0) (totoro, "(⊙.⊙)☂") else (nekobus, "Nekobus")
     for (j <- 0 until (math.random * 5).toInt) chatList.addEntry(user, image, s"$i-$j " + emojis.keysIterator.drop((math.random * (emojis.size - 1)).toInt).next)
   }
   
