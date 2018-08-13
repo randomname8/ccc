@@ -96,7 +96,10 @@ class MarkdownRenderer(
             case t: md.Text if t != null => t.getLiteral
             case _ => ""
           })
-        override def visit(e: md.Link) = texts add nodeFactory.mkLink(context)(Option(e.getTitle), e.getDestination)
+        override def visit(e: md.Link) = {
+          texts add nodeFactory.mkLink(context)(Option(e.getTitle), e.getDestination)
+          sealCurrentTextRun()
+        }
         override def visit(e: md.BlockQuote) = {
           e.getFirstChild match {
             case null => appendText(">\n")
@@ -113,15 +116,20 @@ class MarkdownRenderer(
             case e: mdext.ins.Ins => modifyGeneratedTexts(e)(_.setUnderline(true))
             case e if customNodeSupport.isDefinedAt(e) => 
               val (node, inlined) = customNodeSupport(e)(emojiProvider, nodeFactory, context)
-              if (inlined) texts add node
-              else {
+              if (inlined) {
+                texts add node
+                sealCurrentTextRun()
+              } else {
                 curr = None
                 res :+= node
               }
             case _ => visitChildren(e)
           }
         }
-        override def visit(e: md.Code) = texts add nodeFactory.mkCodeLine(context)(e.getLiteral)
+        override def visit(e: md.Code) = {
+          texts add nodeFactory.mkCodeLine(context)(e.getLiteral)
+          sealCurrentTextRun()
+        }
         override def visit(e: md.FencedCodeBlock) = {
           curr = None
           res :+= nodeFactory.mkCodeBlock(context)(Option(e.getInfo), e.getLiteral)
