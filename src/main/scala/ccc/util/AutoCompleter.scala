@@ -10,6 +10,7 @@ import javafx.scene.input.{KeyEvent, KeyCode}
 import javafx.stage.{Popup, PopupWindow}
 import javafx.util.Duration
 import scala.collection.JavaConverters._
+import tangerine._
 
 /**
  * Implements an auto completer for arbitrary text inputs.

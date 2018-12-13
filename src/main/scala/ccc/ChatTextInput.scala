@@ -7,6 +7,7 @@ import javafx.scene.layout.{VBox, Pane, Region}
 import javafx.scene.web.WebView
 import javafx.stage.Popup
 import javafx.stage.PopupWindow
+import tangerine._
 
 class ChatTextInput(val markdownRenderer: MarkdownRenderer,
                     val markdownNodeFactory: MarkdownRenderer.NodeFactory,
@@ -16,7 +17,7 @@ class ChatTextInput(val markdownRenderer: MarkdownRenderer,
   val textArea = nodeRoot.lookup(".text-area").asInstanceOf[TextArea]
   textArea.textProperty foreach { t =>
     if (t != null) {
-      val bounds = util.JfxUtils.computeTextBounds(t, textArea.getFont, textArea.getWidth - textArea.getFont.getSize) //take into account the paddings of the text area
+      val bounds = JfxUtils.computeTextBounds(t, textArea.getFont, textArea.getWidth - textArea.getFont.getSize) //take into account the paddings of the text area
       textArea.setPrefHeight(bounds.getHeight + textArea.getFont.getSize)
     } else textArea setPrefRowCount 1
   }
@@ -38,7 +39,7 @@ class ChatTextInput(val markdownRenderer: MarkdownRenderer,
       val visualScrollPane = new ScrollPane(visual)
       visualScrollPane setFitToWidth true
       visualScrollPane setFitToHeight true
-      val previewTitledPane = new TitledPane("preview", visualScrollPane).modify(_.getStyleClass add "chat-preview-title-pane")
+      val previewTitledPane = new TitledPane("preview", visualScrollPane).tap(_.getStyleClass add "chat-preview-title-pane")
       container.getChildren.set(container.getChildren.indexOf(visual), previewTitledPane)
       
       var instantiatedPlayers = Vector.empty[util.VlcMediaPlayer]

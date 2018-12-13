@@ -9,6 +9,7 @@ import javafx.scene.canvas.Canvas
 import javafx.scene.image.PixelFormat
 import javafx.scene.layout.StackPane
 import scala.concurrent.duration.DurationLong
+import tangerine._
 
 trait Texture {
   def width: Int

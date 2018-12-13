@@ -13,6 +13,7 @@ import javafx.scene.text.{Font, Text}
 import javafx.stage.Stage
 import javafx.util.Duration
 import netscape.javascript.JSObject
+import tangerine._
 
 class DefaultMarkdownNodeFactory(
   val hostServices: HostServices,
@@ -21,7 +22,7 @@ class DefaultMarkdownNodeFactory(
   
   def desiredEmojiHeight = Font.getDefault.getSize * 1.8
   override def mkEmoji(context: MarkdownRenderer.RenderContext)(name: String, image: Image): Node = {
-    val emojiImageView = new ImageView(image).modify(_.setPreserveRatio(true), _.setSmooth(true), _.setFitHeight(desiredEmojiHeight))
+    val emojiImageView = new ImageView(image).tap { i => i.setPreserveRatio(true); i.setSmooth(true); i.setFitHeight(desiredEmojiHeight) }
     val emojiLabel = new Label(null, emojiImageView)
     emojiLabel setTooltip new Tooltip(name)
     val expandAnimation = new Timeline(
@@ -53,18 +54,18 @@ class DefaultMarkdownNodeFactory(
         mediaPlayer.setMedia(url, None)
         mediaPlayer
       } else {
-        val imageView = new ImageView().modify(_.setFitHeight(fitWidth), _.setFitWidth(fitHeight), _.setPreserveRatio(true))
+        val imageView = new ImageView().tap { i => i.setFitHeight(fitWidth); i.setFitWidth(fitHeight); i.setPreserveRatio(true) }
         imagesCache(url).onRetrieve(imageView.setImage)
-        imageView.fitWidthProperty.bind(container.prefWidthProperty.map(v => if (v.doubleValue == -1) fitWidth else v))
-        imageView.fitHeightProperty.bind(container.prefHeightProperty.map(v => if (v.doubleValue == -1) fitHeight else v))
+        imageView.fitWidthProperty.bind(container.prefWidthProperty.map(v => if (v.doubleValue == -1) fitWidth else v.doubleValue))
+        imageView.fitHeightProperty.bind(container.prefHeightProperty.map(v => if (v.doubleValue == -1) fitHeight else v.doubleValue))
         imageView
       }
       container.getChildren.add(content)
       container
     }
-    new CollapsibleContent(title, content(if (width == -1) 500 else width, if (height == -1) 500 else height), url).modify(
-      _.setTooltip(new Tooltip(altText)),
-      self => self setOnMouseClicked { evt => evt.getButton match {
+    new CollapsibleContent(title, content(if (width == -1) 500 else width, if (height == -1) 500 else height), url).tap { self =>
+      self.setTooltip(new Tooltip(altText))
+      self setOnMouseClicked { evt => evt.getButton match {
           case MouseButton.SECONDARY =>
             val stage = new Stage()
             stage initOwner self.getScene.getWindow
@@ -74,14 +75,16 @@ class DefaultMarkdownNodeFactory(
             stage.show()
           case MouseButton.MIDDLE => hostServices.showDocument(url)
           case _ =>
-        }})
+        }}
+    }
   }
   
-  def mkLink(context: MarkdownRenderer.RenderContext)(title: Option[String], url: String): Node = new Text(title.getOrElse(url)).modify(
-    _.getStyleClass.addAll("hyperlink", "md-link"),
-    _ setOnMouseClicked { evt => if (evt.getButton == MouseButton.PRIMARY) hostServices.showDocument(url) })
+  def mkLink(context: MarkdownRenderer.RenderContext)(title: Option[String], url: String): Node = new Text(title.getOrElse(url)).tap { t =>
+    t.getStyleClass.addAll("hyperlink", "md-link")
+    t setOnMouseClicked { evt => if (evt.getButton == MouseButton.PRIMARY) hostServices.showDocument(url) }
+  }
 
-  def mkCodeLine(context: MarkdownRenderer.RenderContext)(code: String): Node = new Label(code).modify(_.setFont(monoscriptFont), _.setStyle("-fx-background-color: lightgray;"))
+  def mkCodeLine(context: MarkdownRenderer.RenderContext)(code: String): Node = new Label(code).tap { l => l.setFont(monoscriptFont); l.setStyle("-fx-background-color: lightgray;") }
   
   def mkCodeBlock(context: MarkdownRenderer.RenderContext)(language: Option[String], code: String): Node = {
     //check if we have some webview available, otherwise create one
@@ -133,8 +136,9 @@ object DefaultMarkdownNodeFactory {
       case Seq(f1, f2) if f1.name == "highlight.min.js" && f2.name == "highlights.css" => (f1, f2)
       case _ => (File.newTemporaryFile("ccc", "highlight.min.js"), File.newTemporaryFile("ccc", "highlights.css"))//unknown directory! use two random files
     }
-    if (highlightsJs.isEmpty) File.copyResource("syntax-highlighter/highlight.min.js")(highlightsJs)
-    if (highlightsCss.isEmpty) File.copyResource("syntax-highlighter/highlights.css")(highlightsCss)
+    
+    if (highlightsJs.isEmpty) highlightsJs.outputStream() foreach (Resource.getAsStream("syntax-highlighter/highlight.min.js").transferTo)
+    if (highlightsCss.isEmpty) highlightsCss.outputStream() foreach (Resource.getAsStream("syntax-highlighter/highlights.css").transferTo)
     (highlightsJs.uri, highlightsCss.uri)
   }
   

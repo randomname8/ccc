@@ -19,7 +19,7 @@ trait BaseApplication extends Application {
       fontSize.orElse(systemFontSize) foreach (systemFontSize => sys.props("com.sun.javafx.fontSize") = systemFontSize.toString)
     }
   }
-  def start(stage: Stage): Unit = {    
+  def start(stage: Stage): Unit = {
     val root = sceneRoot()
     val scene = new Scene(root)
     

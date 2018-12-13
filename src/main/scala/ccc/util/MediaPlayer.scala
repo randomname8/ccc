@@ -8,6 +8,7 @@ import javafx.scene.Node
 import javafx.scene.control.{Button, Control, Label, Slider}
 import javafx.scene.layout.{Pane, StackPane}
 import javafx.stage.{Popup, PopupWindow}
+import tangerine._, Properties._
 
 class MediaPlayer extends Control {
 
@@ -27,7 +28,7 @@ class MediaPlayer extends Control {
   object Skin extends javafx.scene.control.Skin[MediaPlayer] {
     override def getSkinnable = MediaPlayer.this
     override def dispose() = {}
-    val timeChangeBinding = JfxUtils.Binding(currentTime, totalDuration)(() => (currentTime.get, totalDuration.get)) //store the binding in a field to prevent it from being GCd
+    val timeChangeBinding = Binding(currentTime, totalDuration)(_ => (currentTime.get, totalDuration.get)) //store the binding in a field to prevent it from being GCd
     override val getNode = {
       val root = FXMLLoader.load[StackPane](getClass.getResource("/media-player.fxml"))
       root.getStylesheets.add("/media-player.css")
@@ -40,10 +41,11 @@ class MediaPlayer extends Control {
       
       val progressText = root.lookup(".media-progress-text").asInstanceOf[Label]
       val progressSlider = root.lookup(".media-progress-slider").asInstanceOf[Slider]
-      progressSlider.modify(
-        _ setMin 0, _ setMax 1,
-        _ setBlockIncrement 0.01,
-        _.valueProperty foreach (n => if (!progressSlider.isValueChanging) onSeeking.get()((n.doubleValue * totalDuration.get).toLong)))
+      progressSlider.tap { s =>
+        s setMin 0; s setMax 1
+        s setBlockIncrement 0.01
+        s.valueProperty foreach (n => if (!progressSlider.isValueChanging) onSeeking.get()((n.doubleValue * totalDuration.get).toLong))
+      }
       
       timeChangeBinding.foreach { tuple => tuple match {
           case (currentTime, totalTime) =>
@@ -61,13 +63,15 @@ class MediaPlayer extends Control {
       }}
       
       val mediaSoundButton = root.lookup(".media-sound-button").asInstanceOf[Button]
-      val currentVolume = new Slider(0, 100, 100).modify(
-        _ setOrientation Orientation.VERTICAL,
-        _ setBlockIncrement 10)
-      val volumePopup = new Popup().modify(
-        _.getContent add currentVolume,
-        _ setHideOnEscape true, _ setAutoHide true,
-        _ setAnchorLocation PopupWindow.AnchorLocation.CONTENT_BOTTOM_LEFT)
+      val currentVolume = new Slider(0, 100, 100).tap { s =>
+        s setOrientation Orientation.VERTICAL
+        s setBlockIncrement 10
+      }
+      val volumePopup = new Popup().tap { p =>
+        p.getContent add currentVolume
+        p setHideOnEscape true; p setAutoHide true
+        p setAnchorLocation PopupWindow.AnchorLocation.CONTENT_BOTTOM_LEFT
+      }
       volume.foreach { n =>
         val volume = n.floatValue
         if (volume == 0) mediaSoundButton setText "🔇"

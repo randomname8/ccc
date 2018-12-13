@@ -10,6 +10,7 @@ import javafx.scene.layout.Pane
 import javafx.scene.text.Font
 
 import scala.collection.JavaConverters._
+import tangerine._
 
 object EmojiPicker {
   val PickedEmojiEventType = new EventType("PickedEmojiEventType")
@@ -86,7 +87,7 @@ class EmojiPicker(val emojiProvider: Map[String, Image]) extends Control {
         }
       }}
       
-      util.JfxUtils.showingProperty(nodeRoot).foreach(b =>  if (b) searchField.requestFocus())
+      JfxUtils.showingProperty(nodeRoot).foreach(b =>  if (b) searchField.requestFocus())
       nodeRoot.setPrefWidth((EmojiWidth * 1.7) * 5)
       nodeRoot
     }

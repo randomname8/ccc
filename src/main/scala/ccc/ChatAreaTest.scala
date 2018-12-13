@@ -2,11 +2,13 @@ package ccc
 
 import java.time.LocalDateTime
 import javafx.application.Application
+import javafx.geometry.Pos
 import javafx.scene.control.ScrollPane
 import javafx.scene.input.KeyCode
 import javafx.scene.layout.BorderPane
 import javafx.scene.text.Font
 import javafx.stage.Stage
+import tangerine._, JfxControls._
 
 object ChatAreaTest extends App {
   System.setProperty("prism.lcdtext", "false")
@@ -38,8 +40,8 @@ class ChatAreaTest extends BaseApplication {
   
   val chatTextInput = new ChatTextInput(mdRenderer, mdNodeFactory, emojisLookup)
   val sceneRoot = new BorderPane {
-    this center new ScrollPane(chatList).modify(_ setFitToWidth true, _ setFitToHeight true)
-    this bottom hbox(chatTextInput, new javafx.scene.control.Button("press me"))
+    this setCenter new ScrollPane(chatList).tap { s => s setFitToWidth true; s setFitToHeight true }
+    this setBottom hbox(chatTextInput, new javafx.scene.control.Button("press me"))(Pos.BASELINE_LEFT)
   }
   
   val imgSize = Font.getDefault.getSize * 4

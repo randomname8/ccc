@@ -9,6 +9,7 @@ import javafx.scene.text._
 import org.commonmark.{node => md, ext => mdext}
 import org.commonmark.parser.{Parser => MdParser}
 import scala.collection.JavaConverters._
+import tangerine.JfxControls._
 
 class MarkdownRenderer(
   val parser: MdParser = MdParser.builder.extensions(java.util.Arrays.asList(
@@ -22,17 +23,17 @@ class MarkdownRenderer(
   //need to extract the highligher.js and css to temp files
   //we want to keep these cached in temp, but we have to make sure we don't conflict with other programs, so in case we do, we'll just use
   //two random new temp files
-  val (highlightsJs, highlightsCss) = {
-    val cccTempDir = (File.temp/"ccc").createIfNotExists(asDirectory = true)
-    val (highlightsJs, highlightsCss) = cccTempDir.list.toSeq match {
-      case Seq() => (cccTempDir/"highlight.min.js", cccTempDir/"highlights.css")//extract the files
-      case Seq(f1, f2) if f1.name == "highlight.min.js" && f2.name == "highlights.css" => (f1, f2)
-      case _ => (File.newTemporaryFile("ccc", "highlight.min.js"), File.newTemporaryFile("ccc", "highlights.css"))//unknown directory! use two random files
-    }
-    if (highlightsJs.isEmpty) File.copyResource("syntax-highlighter/highlight.min.js")(highlightsJs)
-    if (highlightsCss.isEmpty) File.copyResource("syntax-highlighter/highlights.css")(highlightsCss)
-    (highlightsJs.uri, highlightsCss.uri)
-  }
+//  val (highlightsJs, highlightsCss) = {
+//    val cccTempDir = (File.temp/"ccc").createIfNotExists(asDirectory = true)
+//    val (highlightsJs, highlightsCss) = cccTempDir.list.toSeq match {
+//      case Seq() => (cccTempDir/"highlight.min.js", cccTempDir/"highlights.css")//extract the files
+//      case Seq(f1, f2) if f1.name == "highlight.min.js" && f2.name == "highlights.css" => (f1, f2)
+//      case _ => (File.newTemporaryFile("ccc", "highlight.min.js"), File.newTemporaryFile("ccc", "highlights.css"))//unknown directory! use two random files
+//    }
+//    if (highlightsJs.isEmpty) File.copyResource("syntax-highlighter/highlight.min.js")(highlightsJs)
+//    if (highlightsCss.isEmpty) File.copyResource("syntax-highlighter/highlights.css")(highlightsCss)
+//    (highlightsJs.uri, highlightsCss.uri)
+//  }
   
   def render(text: String,
              emojiProvider: Map[String, Image],

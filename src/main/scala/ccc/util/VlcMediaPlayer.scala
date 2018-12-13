@@ -10,6 +10,7 @@ import uk.co.caprica.vlcj.player.{MediaPlayer => VlcPlayer}
 import uk.co.caprica.vlcj.discovery.NativeDiscovery
 import uk.co.caprica.vlcj.player.direct.DefaultDirectMediaPlayer
 import uk.co.caprica.vlcj.player.direct.format.RV32BufferFormat
+import tangerine._
 
 object VlcMediaPlayer {
   private[VlcMediaPlayer] lazy val runNativeDiscovery = new NativeDiscovery().discover()
@@ -48,7 +49,7 @@ class VlcMediaPlayer extends MediaPlayer {
       VlcMediaPlayer.this.playing.set(false)
     }
     override def volumeChanged(player: VlcPlayer, newVolume: Float) = Platform.runLater { () =>
-      val currVolume = player.getVolume / 100.0f
+      val currVolume = newVolume / 100.0f
       if (volume.get != currVolume) volume set currVolume
     }
     override def muted(player: VlcPlayer, muted: Boolean) = Platform.runLater { () =>
@@ -61,17 +62,19 @@ class VlcMediaPlayer extends MediaPlayer {
   val mediaPlayer = mediaPlayerComponent.getMediaPlayer.asInstanceOf[DefaultDirectMediaPlayer]
   
   private val contentStackPane = new StackPane()
-  private val thumbnailImageView = new ImageView().modify(_.setPreserveRatio(true), _.setSmooth(true), _ setVisible false,
-                                                          _.fitWidthProperty bind contentStackPane.widthProperty,
-                                                          _.fitHeightProperty bind contentStackPane.heightProperty)
-  private val bufferingStatus = new ProgressIndicator(ProgressIndicator.INDETERMINATE_PROGRESS).modify(_ setVisible false)
-  private val errorLabel = new Label("An error occurred").modify(_ setVisible false)
+  private val thumbnailImageView = new ImageView().tap { i => 
+    i.setPreserveRatio(true); i.setSmooth(true); i setVisible false
+    i.fitWidthProperty bind contentStackPane.widthProperty
+    i.fitHeightProperty bind contentStackPane.heightProperty
+  }
+  private val bufferingStatus = new ProgressIndicator(ProgressIndicator.INDETERMINATE_PROGRESS).tap(_ setVisible false)
+  private val errorLabel = new Label("An error occurred").tap(_ setVisible false)
   private val textureNode = new TextureNode(new VlcTexture(mediaPlayer), 60)
   playing foreach (b => if (b) textureNode.renderer.start() else textureNode.renderer.stop())
   contentStackPane.getChildren.addAll(thumbnailImageView, textureNode, bufferingStatus, errorLabel)
   content set contentStackPane
   
-  volume.foreach { v => mediaPlayer setVolume (v.floatValue * 2).toInt }
+//  volume.foreach { v => mediaPlayer setVolume (v.floatValue * 2).toInt }
   onPlay set { () =>
     if (mediaPlayer.isPlaying) mediaPlayer.pause()
     else mediaPlayer.play()

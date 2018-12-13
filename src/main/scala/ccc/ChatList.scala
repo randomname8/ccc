@@ -11,11 +11,13 @@ import javafx.collections.FXCollections
 import javafx.fxml.FXMLLoader
 import javafx.scene.Node
 import javafx.scene.control._
+import javafx.scene.control.skin.VirtualFlow
 import javafx.scene.input.{Clipboard, ClipboardContent, MouseButton}
 import javafx.scene.layout._
 import javafx.scene.text.{Text, TextFlow}
 import javafx.scene.web.WebView
 import scala.collection.JavaConverters._
+import tangerine._
 
 object ChatList {
   case class ChatBox[User, Message](user: User, avatar: util.WeakImage, messages: Vector[Message])
@@ -70,6 +72,25 @@ class ChatList[User, Message](val hostServices: HostServices,
   
   setCellFactory(_ => new ChatBoxListCell())
   
+  val textSelectionSupport = new TextSelectionSupport
+  
+  //check when the skin is set, in order to retrieve the VirtualFlow and attach a TextFlowSelectionSupport to it
+  skinProperty.addListener(JfxUtils.onceChangeListener[Skin[_]] { (_, skin) => 
+      val vf = skin.getNode.lookup(".virtual-flow").asInstanceOf[VirtualFlow[_]]
+      textSelectionSupport.rootNode set vf
+      
+      import javafx.scene.input._
+      this.addEventHandler[KeyEvent](KeyEvent.KEY_PRESSED, evt => {
+          if (evt.getCode == KeyCode.C && evt.isShortcutDown) {
+            val selection = textSelectionSupport.selection.get
+            println("Current selection " + selection)
+            val text = selection collect { case Right(s) => s } mkString ""
+            if (text.nonEmpty)
+              Clipboard.getSystemClipboard.setContent(new ClipboardContent().tap(_ putString text))
+          }
+        })
+    })
+  
   def addEntry(user: User, avatar: util.WeakImage, message: Message): Unit = {
     itemsScala.lastOption match {
       case Some(box) if box.user == user && {
@@ -93,12 +114,12 @@ class ChatList[User, Message](val hostServices: HostServices,
   private val messagesDateTimeFormat = DateTimeFormatter.ofLocalizedDateTime(FormatStyle.MEDIUM)
   class ChatBoxListCell private[ChatList]() extends ListCell[ChatBox[User, Message]] {
     val pane = FXMLLoader.load[Pane](getClass.getResource("/chat-box-entry.fxml"))
-    val avatarPane = pane.lookup(".avatar-pane").asInstanceOf[Pane].modify(
+    val avatarPane = pane.lookup(".avatar-pane").asInstanceOf[Pane].tap(
       _.setOnMouseClicked(evt => if (evt.getButton == MouseButton.MIDDLE && getItem != null) {
           hostServices.showDocument(getItem.avatar.imageLocation)
         }))
-    val userLabel = pane.lookup(".user-label").asInstanceOf[Label].modify(_ setText "")
-    val dateLabel = pane.lookup(".chat-date-label").asInstanceOf[Label].modify(_ setText "")
+    val userLabel = pane.lookup(".user-label").asInstanceOf[Label].tap(_ setText "")
+    val dateLabel = pane.lookup(".chat-date-label").asInstanceOf[Label].tap(_ setText "")
     val entriesVBox = pane.lookup(".entries-vbox").asInstanceOf[VBox]
     setGraphic(pane)
     private[this] var lastItem: ChatBox[User, Message] = _
@@ -142,8 +163,12 @@ class ChatList[User, Message](val hostServices: HostServices,
       val messageContainer = chatMessagePane.lookup(".chat-message").asInstanceOf[Pane]
       val renderedMarkdown = 
         try messageRenderFactory.get()(msg, renderContext)
-      catch { case ex@(_:ExceptionInInitializerError | _:NoClassDefFoundError)  => Seq(new javafx.scene.text.Text("Failed rendering message: " + ex).modify(_.setFill(javafx.scene.paint.Color.RED))) }
+      catch { case ex@(_:ExceptionInInitializerError | _:NoClassDefFoundError)  => Seq(new javafx.scene.text.Text("Failed rendering message: " + ex).tap(_.setFill(javafx.scene.paint.Color.RED))) }
       renderedMarkdown foreach { n =>
+//        n match {
+//          case tf: TextFlow => new util.TextFlowSelectionSupport(tf)
+//          case _ =>
+//        }
         n match {
           case r: Region => r.maxWidthProperty bind maxWidth
           case r: WebView => r.maxWidthProperty bind maxWidth
@@ -159,28 +184,30 @@ class ChatList[User, Message](val hostServices: HostServices,
       
       val ShowSourceMode = new Tooltip("Show source")
       val HideSourceMode = new Tooltip("Hide source")
-      controlsPane.getChildren add new Button("🗏").modify(
-        _ setTooltip ShowSourceMode,
-        button => button setOnAction { evt =>
+      controlsPane.getChildren add new Button("🗏").tap { button =>
+        button setTooltip ShowSourceMode
+        button setOnAction { evt =>
           messageContainer.getChildren.clear()
           button.getTooltip match {
             case ShowSourceMode =>
-              messageContainer.getChildren add new TextArea(messageContent(msg)).modify(
-                _ setEditable false, _ setWrapText true,
-                ta => {
-                  val bounds = util.JfxUtils.computeTextBounds(ta.getText, ta.getFont)
-                  ta.setPrefSize(bounds.getWidth, bounds.getHeight)
-                })
+              messageContainer.getChildren add new TextArea(messageContent(msg)).tap { ta => 
+                ta setEditable false
+                ta setWrapText true
+                val bounds = JfxUtils.computeTextBounds(ta.getText, ta.getFont)
+                ta.setPrefSize(bounds.getWidth, bounds.getHeight)
+              }
               button setTooltip HideSourceMode
             case HideSourceMode =>
               renderedMarkdown foreach messageContainer.getChildren.add
               button setTooltip ShowSourceMode
               
           }
-        })
-      controlsPane.getChildren add new Button("🗐").modify(
-        _ setTooltip new Tooltip("Copy"),
-        _ setOnAction { evt => Clipboard.getSystemClipboard setContent new ClipboardContent().modify(_.putString(messageContent(msg)))})
+        }
+      }
+      controlsPane.getChildren add new Button("🗐").tap { b =>
+        b setTooltip new Tooltip("Copy")
+        b setOnAction { evt => Clipboard.getSystemClipboard setContent new ClipboardContent().tap(_.putString(messageContent(msg)))}
+      }
       
       chatMessagePane
     }
