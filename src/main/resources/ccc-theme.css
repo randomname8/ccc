@@ -84,9 +84,8 @@
 
 /* emoji picker */
 .emoji-picker > .column-header-background {
-  visibility: hidden;
   -fx-min-height: 0;
-  -fx-max-height: 0;
+  -fx-pref-height: 0;
 }
 .emoji-picker-selection-button {
   -fx-padding: 0;

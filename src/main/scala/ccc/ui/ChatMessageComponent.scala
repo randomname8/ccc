@@ -4,6 +4,7 @@ package ui
 import javafx.geometry.Pos
 import javafx.scene.control._
 import javafx.scene.layout._
+import scala.util.chaining._
 import tangerine._
 
 private[ccc] class ChatMessageComponent extends UiComponent {

@@ -8,6 +8,7 @@ import javafx.scene.Node
 import javafx.scene.control.{Button, Control, Label, Slider}
 import javafx.scene.layout.{Pane, StackPane}
 import javafx.stage.{Popup, PopupWindow}
+import scala.util.chaining._
 import tangerine._, Properties._
 
 class MediaPlayer extends Control {
@@ -108,8 +109,8 @@ class MediaPlayer extends Control {
     
     def millisToString(millis: Long) = {
       val seconds = millis / 1000
-      val days = if (seconds >= 3600*24) (seconds / (3600*24)) + ":" else ""
-      val hours = if (seconds >= 3600) (seconds / 3600) + ":" else ""
+      val days = if (seconds >= 3600*24) s"${seconds / (3600*24)}:" else ""
+      val hours = if (seconds >= 3600) s"${seconds / (3600)}:" else ""
       f"${days}${hours}${(seconds % 3600) / 60}%02d:${seconds % 60}%02d"
     }
   }

@@ -5,6 +5,7 @@ import javafx.geometry.Pos
 import javafx.scene.control._
 import javafx.scene.image.Image
 import javafx.scene.layout._
+import scala.util.chaining._
 import tangerine._, JfxControls._
 
 private[ccc] class ChatBoxEntryComponent extends UiComponent {

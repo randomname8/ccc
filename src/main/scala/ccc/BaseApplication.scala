@@ -3,7 +3,7 @@ package ccc
 import javafx.application.Application
 import javafx.scene._
 import javafx.stage._
-import scala.collection.JavaConverters._
+import scala.jdk.CollectionConverters._
 
 trait BaseApplication extends Application {
   def sceneRoot(): Parent

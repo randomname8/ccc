@@ -10,6 +10,7 @@ import uk.co.caprica.vlcj.player.{MediaPlayer => VlcPlayer}
 import uk.co.caprica.vlcj.discovery.NativeDiscovery
 import uk.co.caprica.vlcj.player.direct.DefaultDirectMediaPlayer
 import uk.co.caprica.vlcj.player.direct.format.RV32BufferFormat
+import scala.util.chaining._
 import tangerine._
 
 object VlcMediaPlayer {

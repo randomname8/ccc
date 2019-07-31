@@ -13,6 +13,7 @@ import javafx.scene.text.{Font, Text}
 import javafx.stage.Stage
 import javafx.util.Duration
 import netscape.javascript.JSObject
+import scala.util.chaining._
 import tangerine._
 
 class DefaultMarkdownNodeFactory(
@@ -44,7 +45,7 @@ class DefaultMarkdownNodeFactory(
   
   //we'll store the collpased state of the last 1000 generated collapsible elements, so when we regenerate their node, we use the previous
   //collapsed state
-  private[this] val collapsedElementState = new util.LruMap[Any, Boolean](1000)
+  private[this] val collapsedElementState = util.LruMap[Any, Boolean](1000)
   
   override def mkInlineContent(context: MarkdownRenderer.RenderContext)(title: String, url: String, altText: String, width: Double, height: Double): Node = {
     def content(fitWidth: Double, fitHeight: Double) = {

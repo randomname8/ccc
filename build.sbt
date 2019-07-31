@@ -1,16 +1,19 @@
 name := "ccc"
-scalaVersion := "2.12.7"
+scalaVersion := "2.13.0"
 
 fork := true
 
-scalacOptions ++= Seq("-deprecation", "-unchecked", "-feature", "-Yno-adapted-args", "-Xlint", "-Ypartial-unification", "-opt:_", "-opt-warnings:_", "-Ywarn-extra-implicit", "-Ywarn-inaccessible", "-Ywarn-infer-any", "-Ywarn-nullary-override", "-Ywarn-nullary-unit", "-Ywarn-numeric-widen")
-scalacOptions in (Compile, console) --= Seq("-Ywarn-unused:_", "-opt:_", "-Xlint")
+scalacOptions ++= Seq("-deprecation", "-unchecked", "-feature", "-Xlint", "-opt:_", "-opt-warnings:_", "-opt:l:inline", "-opt-inline-from:scala.**,tangerine.**")
+scalacOptions in (Compile, console) --= Seq("-opt:_", "-Xlint")
 
-resolvers += "jcenter bintray" at "http://jcenter.bintray.com"
+resolvers ++= Seq(
+  "jcenter bintray" at "http://jcenter.bintray.com",
+)
+
 
 dependsOn(RootProject(file("../tangerine")))
 
-lazy val jfxVersion = "11"
+lazy val jfxVersion = "12.0.1"
 lazy val jfxClassifier = settingKey[String]("jfxClassifier")
 jfxClassifier := {
   if (scala.util.Properties.isWin) "win"
@@ -25,7 +28,6 @@ libraryDependencies ++= Seq(
   "org.openjfx" % "javafx-fxml" % jfxVersion classifier jfxClassifier.value,
   "org.openjfx" % "javafx-web" % jfxVersion classifier jfxClassifier.value,
   "org.openjfx" % "javafx-media" % jfxVersion classifier jfxClassifier.value,
-  "com.github.pathikrit" %% "better-files" % "3.6.0",
   "com.atlassian.commonmark" % "commonmark" % "0.11.0",
   "com.atlassian.commonmark" % "commonmark-ext-autolink" % "0.11.0",
   "com.atlassian.commonmark" % "commonmark-ext-gfm-strikethrough" % "0.11.0",
@@ -39,7 +41,7 @@ javaOptions ++= {
   val modules = attributedJars.flatMap { aj =>
     try {
       val module = java.lang.module.ModuleFinder.of(aj.data.toPath).findAll().iterator.next.descriptor
-      Some(aj -> module)
+      Some(aj -> module).filter(!_._2.modifiers.contains(java.lang.module.ModuleDescriptor.Modifier.AUTOMATIC))
     } catch { case _: java.lang.module.FindException => None }
   }
   Seq(

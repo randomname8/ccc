@@ -32,7 +32,7 @@ class TextureNode(val texture: Texture, val targetFps: Int) extends StackPane {
   private val pixelFormat = PixelFormat.getByteBgraPreInstance
   
   val renderer = new AnimationTimer() {
-    val totalTimePerFrame = 1000l / targetFps
+    val totalTimePerFrame = 1000L / targetFps
     var nextFrame: Long = 0
     override def handle(now: Long): Unit = {
       if (now >= nextFrame) {

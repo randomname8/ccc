@@ -8,7 +8,6 @@ import javafx.beans.property.SimpleObjectProperty
 import javafx.beans.value.ChangeListener
 import javafx.beans.value.ObservableValue
 import javafx.collections.FXCollections
-import javafx.collections.ListChangeListener
 import javafx.scene.Node
 import javafx.scene.control._
 import javafx.scene.control.skin.VirtualFlow
@@ -16,11 +15,24 @@ import javafx.scene.input.{Clipboard, ClipboardContent, MouseButton}
 import javafx.scene.layout._
 import javafx.scene.text.{Text, TextFlow}
 import javafx.scene.web.WebView
-import scala.collection.JavaConverters._
+import scala.jdk.CollectionConverters._
+import scala.util.chaining._
 import tangerine._
 
 object ChatList {
   case class ChatBox[User, Message](user: User, avatar: util.WeakImage, messages: Vector[Message])
+  trait ChatBoxCell[User, Message] extends Cell[ChatBox[User, Message]] {
+    def avatarPane: Pane
+    def userLabel: Label
+    def dateLabel: Label
+    def entriesVBox: VBox
+  }
+  
+  object scrollHandlerKey
+  trait ScrollHandler {
+    def scrollTo(index: Int): Unit
+    def scrollTo(box: ChatBox[_, _]): Unit
+  }
 }
 import ChatList._
 class ChatList[User, Message](val hostServices: HostServices,
@@ -30,12 +42,12 @@ class ChatList[User, Message](val hostServices: HostServices,
   getStyleClass.add("chat-list")
   val items = FXCollections.observableList(new java.util.LinkedList[ChatBox[User, Message]]())
   val itemsScala = items.asScala
-  
+
   val messageControlsFactory = new SimpleObjectProperty[Message => Seq[Node]](this, "additionalMessageControlsFactory", _ => Seq.empty)
   val messageRenderFactory = new SimpleObjectProperty[(Message, () => util.VlcMediaPlayer) => Seq[Node]](this, "additionalMessageRenderFactory", (msg, _) => 
     Seq(new TextFlow(new Text(messageContent(msg)))))
   val userNameNodeFactory = new SimpleObjectProperty[User => Node](this, "userNameNodeFactory")
-  val chatBoxCustomizer = new SimpleObjectProperty[(ChatBox[User, Message], ChatBoxCell) => Unit](this, "userPictureCustomizer", (chatbox, cell) => {
+  val chatBoxCustomizer = new SimpleObjectProperty[(ChatBox[User, Message], ChatBoxCell[User, Message]) => Unit](this, "userPictureCustomizer", (chatbox, cell) => {
       cell.avatarPane.setBackground(null)
       chatbox.avatar.onRetrieve { i =>
         def configureAvatar() = if (chatbox == cell.getItem) {
@@ -103,43 +115,12 @@ class ChatList[User, Message](val hostServices: HostServices,
     }
   }
   
-  trait ChatBoxCell extends Cell[ChatBox[User, Message]] {
-    def avatarPane: Pane
-    def userLabel: Label
-    def dateLabel: Label
-    def entriesVBox: VBox
-  }
-
+  def scrollTo(box: ChatBox[User, Message]): Unit = Option(getProperties.get(scrollHandlerKey)) foreach (_.asInstanceOf[ScrollHandler].scrollTo(box))
+  def scrollTo(index: Int): Unit = Option(getProperties.get(scrollHandlerKey)) foreach (_.asInstanceOf[ScrollHandler].scrollTo(index))
   
-  override def createDefaultSkin: Skin[ChatList[User, Message]] = ListSkin
+ override def createDefaultSkin: Skin[ChatList[User, Message]] = new ui.ChatListVboxSkin(this)
+  // override def createDefaultSkin: Skin[ChatList[User, Message]] = ListSkin
   
-  private object VboxSkin extends Skin[ChatList[User, Message]] {
-    override def dispose = ()
-    override def getSkinnable = ChatList.this
-    override val getNode = new ScrollPane(new VBox().tap { vbox => 
-        vbox.setFillWidth(true)
-//        val cells = getItems.mapLazy { cb => 
-//          val res = new ChatBoxListCell()
-//          res.setMaxHeight(Region.USE_PREF_SIZE)
-//          res.setItem(cb)
-//          res.updateItem(cb, false)
-//          res
-//        }
-//        vbox.getChildren.addAll(cells)
-//        cells.addListener({ evt =>
-//            val children = vbox.getChildren
-//            while (evt.next) {
-//              if (evt.wasPermutated || evt.wasReplaced) children.setAll(cells)
-//              else {
-//                evt.getRemoved forEach (children.remove(_))
-//                evt.getAddedSubList forEach (children.add(_))
-//              }
-//            }
-//          }: ListChangeListener[ChatBoxListCell])
-      
-      }).tap(_.setFitToWidth(true))
-    
-  }
   private object ListSkin extends Skin[ChatList[User, Message]] {
     def dispose = ()
     def getSkinnable = ChatList.this
@@ -154,11 +135,15 @@ class ChatList[User, Message](val hostServices: HostServices,
           val vf = skin.getNode.lookup(".virtual-flow").asInstanceOf[VirtualFlow[_]]
           textSelectionSupport.rootNode set vf
         })
-      
     }
     
+    ChatList.this.getProperties.put(scrollHandlerKey, new ScrollHandler {
+        def scrollTo(index: Int) = getNode.scrollTo(index)
+        def scrollTo(box: ChatBox[_, _]) = getNode.scrollTo(box.asInstanceOf[ChatBox[User, Message]])
+      })
+    
     private val messagesDateTimeFormat = DateTimeFormatter.ofLocalizedDateTime(FormatStyle.MEDIUM)
-    class ChatBoxListCell private[ChatList]() extends ListCell[ChatBox[User, Message]] with ChatBoxCell {
+    class ChatBoxListCell private[ChatList]() extends ListCell[ChatBox[User, Message]] with ChatBoxCell[User, Message] {
       val boxEntryComponent = new ui.ChatBoxEntryComponent()
       val pane = boxEntryComponent.component
       val avatarPane = boxEntryComponent.avatarPane.tap(
@@ -209,7 +194,7 @@ class ChatList[User, Message](val hostServices: HostServices,
         val chatMessageComponent = new ui.ChatMessageComponent()
         val renderedMarkdown = 
           try messageRenderFactory.get()(msg, renderContext)
-          catch { case ex@(_:ExceptionInInitializerError | _:NoClassDefFoundError)  => Seq(new javafx.scene.text.Text("Failed rendering message: " + ex).tap(_.setFill(javafx.scene.paint.Color.RED))) }
+        catch { case ex@(_:ExceptionInInitializerError | _:NoClassDefFoundError)  => Seq(new javafx.scene.text.Text("Failed rendering message: " + ex).tap(_.setFill(javafx.scene.paint.Color.RED))) }
         renderedMarkdown foreach { n =>
           n match {
             case r: Region => r.maxWidthProperty bind maxWidth

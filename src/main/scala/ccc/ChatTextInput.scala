@@ -4,9 +4,10 @@ import javafx.fxml.FXMLLoader
 import javafx.scene.control.{Control, TextArea, ScrollPane, TitledPane, Button, ListCell}
 import javafx.scene.image.Image
 import javafx.scene.layout.{VBox, Pane, Region}
+import javafx.scene.paint.Color
 import javafx.scene.web.WebView
-import javafx.stage.Popup
-import javafx.stage.PopupWindow
+import javafx.stage.{Popup, PopupWindow}
+import scala.util.chaining._
 import tangerine._
 
 class ChatTextInput(val markdownRenderer: MarkdownRenderer,
@@ -68,8 +69,8 @@ class ChatTextInput(val markdownRenderer: MarkdownRenderer,
         }
       }
       
-      val completer = util.AutoCompleter.install(textArea) { (text, word, index) =>
-        util.EmojiOne.emojiLookup.keysIterator.filter(_ startsWith word).to[Vector]
+      val completer = AutoCompleter.install(textArea) { (text, word, index) =>
+        util.EmojiOne.emojiLookup.keysIterator.filter(_ startsWith word).to(Vector)
       }
       completer.completionsList setCellFactory {_ => new ListCell[String] {
           this.getStyleClass add "emoji-autocompletion-cell"
@@ -91,6 +92,7 @@ class ChatTextInput(val markdownRenderer: MarkdownRenderer,
       
 
       val popup = new Popup
+      popup.getScene.setFill(Color.color(1, 1, 1, 0.8))
       popup setAutoHide true
       val emojiPicker = new EmojiPicker(emojiProvider)
       popup.getContent.add(emojiPicker)

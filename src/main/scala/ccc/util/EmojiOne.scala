@@ -2,7 +2,7 @@ package ccc.util
 
 import better.files._
 import com.univocity.parsers.csv.{CsvParser, CsvParserSettings}
-import scala.collection.JavaConverters._
+import scala.jdk.CollectionConverters._
 
 object EmojiOne {
 

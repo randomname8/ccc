@@ -1,6 +1,5 @@
 package ccc
 
-import better.files._
 import javafx.geometry.{Orientation, Pos}
 import javafx.scene.Node
 import javafx.scene.control.Separator
@@ -8,7 +7,7 @@ import javafx.scene.image.Image
 import javafx.scene.text._
 import org.commonmark.{node => md, ext => mdext}
 import org.commonmark.parser.{Parser => MdParser}
-import scala.collection.JavaConverters._
+import scala.jdk.CollectionConverters._
 import tangerine.JfxControls._
 
 class MarkdownRenderer(

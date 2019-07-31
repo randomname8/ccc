@@ -6,7 +6,6 @@ package object ccc {
   import javafx.scene.Node
   import javafx.scene.control._
   import javafx.scene.layout._
-  import javafx.scene.paint.Color
 
   def gridPane(rows: Seq[Node]*)(implicit vgap: Double = 10, hgap: Double = 10) = new GridPane {
     setVgap(vgap)
@@ -29,11 +28,6 @@ package object ccc {
   /*********************
    * MISC
    *********************/
-  
-  implicit class ColorExt(private val c: Color) extends AnyVal {
-    @inline def colorToWeb = "#%02X%02X%02X".format((c.getRed * 255).toInt, (c.getGreen * 255).toInt, (c.getBlue * 255).toInt)
-    @inline def toRgb: Int = ((c.getRed * 255).toInt << 16) | ((c.getGreen * 255).toInt << 8) | (c.getBlue * 255).toInt
-  }
   
   implicit class SafeAbscribe[T](private val t: T) extends AnyVal {
     def abscribe[U >: T]: U = t

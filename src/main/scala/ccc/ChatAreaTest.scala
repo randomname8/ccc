@@ -3,7 +3,6 @@ package ccc
 import java.time.LocalDateTime
 import javafx.application.Application
 import javafx.geometry.Pos
-import javafx.scene.control.ScrollPane
 import javafx.scene.input.KeyCode
 import javafx.scene.layout.BorderPane
 import javafx.scene.text.Font
@@ -24,12 +23,12 @@ class ChatAreaTest extends BaseApplication {
   }
   
   val emojis = util.EmojiOne.emojiLookup.map(e => e._1 -> new util.WeakImage(s"file:emojione_128/${e._2.filename}.png"))
-  private[this] val imagesCache: collection.mutable.Map[String, util.WeakImage] = new util.LruMap[String, util.WeakImage](100).withDefault { k => // cache the most recent images shown in the chat
+  private[this] val imagesCache: collection.mutable.Map[String, util.WeakImage] = util.LruMap[String, util.WeakImage](100).withDefault { k => // cache the most recent images shown in the chat
     val res = new util.WeakImage(k)
     imagesCache(k) = res
     res
   }
-  val emojisLookup = emojis.mapValues(_.get.value.get.get)
+  val emojisLookup = emojis.view.mapValues(_.get.value.get.get).toMap
   
   val mdRenderer = new MarkdownRenderer()
   
@@ -40,7 +39,8 @@ class ChatAreaTest extends BaseApplication {
   
   val chatTextInput = new ChatTextInput(mdRenderer, mdNodeFactory, emojisLookup)
   val sceneRoot = new BorderPane {
-    this setCenter new ScrollPane(chatList).tap { s => s setFitToWidth true; s setFitToHeight true }
+//    this setCenter new ScrollPane(chatList).tap { s => s setFitToWidth true; s setFitToHeight true }
+    this setCenter chatList
     this setBottom hbox(chatTextInput, new javafx.scene.control.Button("press me"))(Pos.BASELINE_LEFT)
   }
   

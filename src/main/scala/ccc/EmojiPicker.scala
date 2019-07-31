@@ -2,15 +2,12 @@ package ccc
 
 import javafx.beans.property.SimpleObjectProperty
 import javafx.event.{EventHandler, Event, EventType}
-import javafx.fxml.FXMLLoader
-import javafx.scene.control.{Control, TableView, TextField, Button, TableColumn, TableCell}
+import javafx.scene.control.{Control, Button, TableColumn, TableCell}
 import javafx.scene.image.Image
 import javafx.scene.image.ImageView
-import javafx.scene.layout.Pane
-import javafx.scene.text.Font
 
-import scala.collection.JavaConverters._
-import tangerine._
+import scala.jdk.CollectionConverters._
+import tangerine._, Properties._
 
 object EmojiPicker {
   val PickedEmojiEventType = new EventType("PickedEmojiEventType")
@@ -26,15 +23,15 @@ class EmojiPicker(val emojiProvider: Map[String, Image]) extends Control {
   
   object Skin extends javafx.scene.control.Skin[EmojiPicker] {
     val EmojisPerRow = 5
-    val EmojiWidth = Font.getDefault.getSize * 2
+    val EmojiWidth = 2.em
     override def getSkinnable = EmojiPicker.this
     override def dispose = ()
     override val getNode = {
-      val nodeRoot = FXMLLoader.load[Pane](getClass.getResource("/emoji-picker.fxml"))
-      nodeRoot setFocusTraversable false
-      val tableView = nodeRoot.lookup(".emoji-picker").asInstanceOf[TableView[ButtonRow]]
+      val picker = new ui.EmojiPickerComponent[ButtonRow]()
+      picker.component setFocusTraversable false
+      val tableView = picker.emojiPicker
       tableView setFocusTraversable false
-      val searchField = nodeRoot.lookup(".emoji-picker-search").asInstanceOf[TextField]
+      val searchField = picker.searchTextField
       
       
       def firePickedImage(image: String): Unit = {
@@ -86,10 +83,13 @@ class EmojiPicker(val emojiProvider: Map[String, Image]) extends Control {
           firePickedImage(img)
         }
       }}
+    
       
-      JfxUtils.showingProperty(nodeRoot).foreach(b =>  if (b) searchField.requestFocus())
-      nodeRoot.setPrefWidth((EmojiWidth * 1.7) * 5)
-      nodeRoot
+      val width = Binding(columns.asScala.map(_.widthProperty).toSeq:_*) { _ => columns.asScala.map(_.getWidth).sum } + EmojisPerRow * 0.6.em
+      picker.component.prefWidthProperty bind width
+      
+      JfxUtils.showingProperty(picker.component).foreach(b =>  if (b) searchField.requestFocus())
+      picker.component
     }
     
     case class ButtonRow(buttons: Seq[String])
